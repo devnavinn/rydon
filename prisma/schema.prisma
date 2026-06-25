@@ -1,0 +1,446 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum AuthProvider {
+  CREDENTIALS
+  GOOGLE
+  APPLE
+  PHONE_OTP
+}
+
+enum RiderLevel {
+  NEWBIE
+  CASUAL
+  EXPLORER
+  ROAD_CAPTAIN
+  VETERAN
+}
+
+enum RideStatus {
+  DRAFT
+  PUBLISHED
+  FULL
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum RideVisibility {
+  PUBLIC
+  FOLLOWERS
+  INVITE_ONLY
+}
+
+enum RideStyle {
+  CITY
+  BREAKFAST
+  HIGHWAY
+  WEEKEND
+  OFFROAD
+  TOURING
+  CHARITY
+  NIGHT
+}
+
+enum RideMemberStatus {
+  INVITED
+  REQUESTED
+  APPROVED
+  REJECTED
+  LEFT
+  REMOVED
+  JOINED
+  COMPLETED
+}
+
+enum GroupStatus {
+  PLANNED
+  ACTIVE
+  ENDED
+  ARCHIVED
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  LOCATION
+  SOS
+  SYSTEM
+}
+
+enum NotificationType {
+  RIDE_INVITE
+  RIDE_JOIN_REQUEST
+  RIDE_APPROVED
+  GROUP_MESSAGE
+  SOS_ALERT
+  SYSTEM
+}
+
+enum ReportTargetType {
+  USER
+  RIDE
+  GROUP
+  MESSAGE
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWING
+  RESOLVED
+  REJECTED
+}
+
+model User {
+  id                String             @id @default(cuid())
+  email             String?            @unique
+  phone             String?            @unique
+  username          String             @unique
+  passwordHash      String?
+  provider          AuthProvider       @default(CREDENTIALS)
+  providerAccountId String?
+  role              UserRole           @default(USER)
+  isActive          Boolean            @default(true)
+  isVerified        Boolean            @default(false)
+  lastSeenAt        DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  riderProfile      RiderProfile?
+  bikes             Bike[]
+  hostedRides       Ride[]             @relation("RideHost")
+  rideMembers       RideMember[]
+  sentInvites       RideInvite[]       @relation("InviteSender")
+  receivedInvites   RideInvite[]       @relation("InviteReceiver")
+  groupMemberships  GroupMember[]
+  messages          Message[]
+  messageReads      MessageRead[]
+  locationPings     LocationPing[]
+  emergencyContacts EmergencyContact[]
+  sentReports       Report[]           @relation("ReportReporter")
+  notifications     Notification[]
+  blockedBy         UserBlock[]        @relation("BlockedUser")
+  blocking          UserBlock[]        @relation("BlockingUser")
+
+  @@index([email])
+  @@index([phone])
+  @@index([username])
+  @@index([role, isActive])
+}
+
+model RiderProfile {
+  id                   String      @id @default(cuid())
+  userId               String      @unique
+  fullName             String
+  avatarUrl            String?
+  bio                  String?     @db.Text
+  city                 String?
+  state                String?
+  country              String?     @default("India")
+  latitude             Decimal?    @db.Decimal(9, 6)
+  longitude            Decimal?    @db.Decimal(9, 6)
+  ridingStyle          RideStyle?
+  preferredRadiusKm    Int?        @default(25)
+  yearsRiding          Int?
+  totalRides           Int         @default(0)
+  totalDistanceKm      Int         @default(0)
+  level                RiderLevel  @default(NEWBIE)
+  badges               String[]    @default([])
+  emergencySharingOn   Boolean     @default(false)
+  profileCompleted     Boolean     @default(false)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  user                 User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([city, state])
+  @@index([country])
+  @@index([latitude, longitude])
+  @@index([ridingStyle])
+}
+
+model Bike {
+  id             String    @id @default(cuid())
+  userId         String
+  brand          String
+  model          String
+  variant        String?
+  year           Int?
+  registrationNo String?
+  engineCc       Int?
+  color          String?
+  photoUrl       String?
+  isPrimary      Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isPrimary])
+  @@index([brand, model])
+}
+
+model Ride {
+  id                  String          @id @default(cuid())
+  hostId              String
+  title               String
+  slug                String          @unique
+  description         String?         @db.Text
+  startLocationName   String
+  startLatitude       Decimal         @db.Decimal(9, 6)
+  startLongitude      Decimal         @db.Decimal(9, 6)
+  destinationName     String
+  destinationLatitude Decimal         @db.Decimal(9, 6)
+  destinationLongitude Decimal        @db.Decimal(9, 6)
+  rideDate            DateTime
+  meetupTime          DateTime
+  estimatedDistanceKm Int?
+  estimatedDurationMin Int?
+  maxRiders           Int             @default(10)
+  minRiders           Int             @default(2)
+  style               RideStyle
+  visibility          RideVisibility  @default(PUBLIC)
+  status              RideStatus      @default(DRAFT)
+  notes               String?         @db.Text
+  requiresApproval    Boolean         @default(true)
+  allowPillion        Boolean         @default(false)
+  helmetRequired      Boolean         @default(true)
+  keepGroupAfterRide  Boolean         @default(false)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  cancelledAt         DateTime?
+
+  host                User            @relation("RideHost", fields: [hostId], references: [id], onDelete: Restrict)
+  stops               RideStop[]
+  members             RideMember[]
+  invites             RideInvite[]
+  group               RideGroup?
+
+  @@index([hostId])
+  @@index([rideDate, status])
+  @@index([style, visibility, status])
+  @@index([startLatitude, startLongitude])
+  @@index([destinationLatitude, destinationLongitude])
+}
+
+model RideStop {
+  id          String    @id @default(cuid())
+  rideId      String
+  title       String
+  latitude    Decimal   @db.Decimal(9, 6)
+  longitude   Decimal   @db.Decimal(9, 6)
+  sortOrder   Int
+  etaMinutes  Int?
+  note        String?   @db.Text
+  createdAt   DateTime  @default(now())
+
+  ride        Ride      @relation(fields: [rideId], references: [id], onDelete: Cascade)
+
+  @@unique([rideId, sortOrder])
+  @@index([rideId])
+}
+
+model RideMember {
+  id            String            @id @default(cuid())
+  rideId         String
+  userId         String
+  status         RideMemberStatus @default(JOINED)
+  joinedAt       DateTime         @default(now())
+  approvedAt     DateTime?
+  leftAt         DateTime?
+  roleLabel      String?          // captain, co-lead, sweep
+  bikeSnapshot   String?          // cached bike label for history
+  note           String?          @db.Text
+
+  ride           Ride             @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([rideId, userId])
+  @@index([rideId, status])
+  @@index([userId, status])
+}
+
+model RideInvite {
+  id            String            @id @default(cuid())
+  rideId         String
+  senderId       String
+  receiverId     String
+  status         RideMemberStatus @default(INVITED)
+  message        String?          @db.Text
+  createdAt      DateTime         @default(now())
+  respondedAt    DateTime?
+
+  ride           Ride             @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  sender         User             @relation("InviteSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver       User             @relation("InviteReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([rideId, receiverId])
+  @@index([receiverId, status])
+  @@index([senderId])
+}
+
+model RideGroup {
+  id               String        @id @default(cuid())
+  rideId            String        @unique
+  name              String
+  status            GroupStatus   @default(PLANNED)
+  keepAfterRide     Boolean       @default(false)
+  activeFrom        DateTime?
+  activeUntil       DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  ride              Ride          @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  members           GroupMember[]
+  messages          Message[]
+  locationPings     LocationPing[]
+
+  @@index([status])
+}
+
+model GroupMember {
+  id            String      @id @default(cuid())
+  groupId        String
+  userId         String
+  joinedAt       DateTime    @default(now())
+  mutedUntil     DateTime?
+  isAdmin        Boolean     @default(false)
+  isEmergencyVisible Boolean @default(true)
+
+  group          RideGroup   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id              String       @id @default(cuid())
+  groupId          String
+  senderId         String
+  type             MessageType @default(TEXT)
+  body             String?      @db.Text
+  imageUrl         String?
+  latitude         Decimal?     @db.Decimal(9, 6)
+  longitude        Decimal?     @db.Decimal(9, 6)
+  isEdited         Boolean      @default(false)
+  isDeleted        Boolean      @default(false)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  group            RideGroup    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  sender           User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  reads            MessageRead[]
+
+  @@index([groupId, createdAt])
+  @@index([senderId])
+  @@index([type])
+}
+
+model MessageRead {
+  id           String     @id @default(cuid())
+  messageId     String
+  userId        String
+  readAt        DateTime   @default(now())
+
+  message       Message    @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([userId, readAt])
+}
+
+model LocationPing {
+  id            String      @id @default(cuid())
+  groupId        String
+  userId         String
+  latitude       Decimal     @db.Decimal(9, 6)
+  longitude      Decimal     @db.Decimal(9, 6)
+  speedKph       Decimal?    @db.Decimal(6, 2)
+  heading        Int?
+  accuracyM      Decimal?    @db.Decimal(6, 2)
+  batteryLevel   Int?
+  recordedAt     DateTime    @default(now())
+
+  group          RideGroup   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, recordedAt])
+  @@index([userId, recordedAt])
+}
+
+model EmergencyContact {
+  id            String      @id @default(cuid())
+  userId         String
+  name           String
+  phone          String
+  relation       String?
+  isPrimary      Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isPrimary])
+}
+
+model Notification {
+  id            String            @id @default(cuid())
+  userId         String
+  type           NotificationType
+  title          String
+  body           String?          @db.Text
+  data           Json?
+  isRead         Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  readAt         DateTime?
+
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt])
+}
+
+model UserBlock {
+  id             String     @id @default(cuid())
+  blockerId       String
+  blockedId       String
+  reason          String?
+  createdAt       DateTime   @default(now())
+
+  blocker         User       @relation("BlockingUser", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked         User       @relation("BlockedUser", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+}
+
+model Report {
+  id              String           @id @default(cuid())
+  reporterId       String
+  targetType       ReportTargetType
+  targetId         String
+  reason           String
+  details          String?         @db.Text
+  status           ReportStatus    @default(OPEN)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  reporter         User            @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([reporterId])
+  @@index([targetType, targetId])
+  @@index([status, createdAt])
+}
