@@ -21,9 +21,15 @@ const AUTH_ROUTES = ["/sign-in", "/sign-up"];
 
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  // getToken doesn't infer the request's protocol the way the rest of Auth.js
+  // does, so without this it always looks for the non-`__Secure-` cookie name
+  // — which silently breaks every session check once the app is served over
+  // HTTPS (real cookie is `__Secure-authjs.session-token`).
+  const proto = request.headers.get("x-forwarded-proto") ?? request.nextUrl.protocol.replace(":", "");
+  const secureCookie = proto === "https";
   // getToken reads and verifies the NextAuth session JWT directly — edge-safe,
   // no Prisma/Node APIs, so this stays lightweight in the proxy runtime.
-  const token = await getToken({ req: request, secret: env.AUTH_SECRET });
+  const token = await getToken({ req: request, secret: env.AUTH_SECRET, secureCookie });
   const hasSession = Boolean(token);
 
   const isAppRoute = APP_ROUTES.some(
