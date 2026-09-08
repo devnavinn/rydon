@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Users, Map, PlusCircle, Route } from "lucide-react";
 
-import { getCurrentUser } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,8 +14,7 @@ const QUICK_LINKS = [
 ];
 
 export default async function DashboardPage() {
-  const user = await getCurrentUser();
-  if (!user) return null;
+  const user = await requireUser();
 
   const myRides = await prisma.rideMember.findMany({
     where: { userId: user.id, status: { in: ["JOINED", "REQUESTED"] } },
