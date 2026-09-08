@@ -3,6 +3,7 @@ import { Users, Map, Route, Radar, UsersRound, Flag, ShieldCheck } from "lucide-
 
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
+import { getCurrentUser } from "@/lib/auth";
 
 const FEATURES = [
   {
@@ -50,7 +51,8 @@ const STEPS = [
 ];
 
 export default async function MarketingHome() {
-  const [riderCount, rideCount, cityGroups] = await Promise.all([
+  const [user, riderCount, rideCount, cityGroups] = await Promise.all([
+    getCurrentUser(),
     prisma.riderProfile.count(),
     prisma.ride.count(),
     prisma.riderProfile.findMany({
@@ -86,12 +88,20 @@ export default async function MarketingHome() {
             and roll out together with a live-style progress room.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg" className="h-12 px-8 text-base font-semibold">
-              <Link href="/sign-up">Join the brotherhood</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="h-12 px-8 text-base">
-              <Link href="/sign-in">Sign in</Link>
-            </Button>
+            {user ? (
+              <Button asChild size="lg" className="h-12 px-8 text-base font-semibold">
+                <Link href="/dashboard">Go to dashboard</Link>
+              </Button>
+            ) : (
+              <>
+                <Button asChild size="lg" className="h-12 px-8 text-base font-semibold">
+                  <Link href="/sign-up">Join the brotherhood</Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="h-12 px-8 text-base">
+                  <Link href="/sign-in">Sign in</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           <dl className="mt-10 grid w-full max-w-xl grid-cols-3 gap-4 border-t border-white/10 pt-8">

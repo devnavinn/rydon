@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Calendar, Clock, Users, Play, Flag as FlagIcon } from "lucide-react";
 
 import { useRideDetail } from "@/features/rides/queries";
@@ -73,6 +73,13 @@ export function RideRoom({
   const rideDate = new Date(active.rideDate);
   const meetupTime = new Date(active.meetupTime);
 
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  const canStart = meetupTime.getTime() <= now;
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -100,34 +107,48 @@ export function RideRoom({
           </div>
         </div>
 
-        <div className="flex gap-2">
-          {isHost && (active.status === "PUBLISHED" || active.status === "FULL") ? (
-            <Button onClick={() => rideAction.mutate({ action: "start" })} disabled={rideAction.isPending}>
-              <Play className="size-3.5" /> Start ride
-            </Button>
+        <div className="flex flex-col items-end gap-1.5">
+          <div className="flex gap-2">
+            {isHost && (active.status === "PUBLISHED" || active.status === "FULL") ? (
+              <Button
+                onClick={() => rideAction.mutate({ action: "start" })}
+                disabled={rideAction.isPending || !canStart}
+                title={canStart ? undefined : `Can't start before ${meetupTime.toLocaleString()}`}
+              >
+                <Play className="size-3.5" /> Start ride
+              </Button>
+            ) : null}
+            {isHost && active.status === "ONGOING" ? (
+              <Button
+                variant="outline"
+                onClick={() => rideAction.mutate({ action: "end" })}
+                disabled={rideAction.isPending}
+              >
+                <FlagIcon className="size-3.5" /> End ride
+              </Button>
+            ) : null}
+            {!isHost && !membership ? (
+              <Button onClick={() => joinRide.mutate()} disabled={joinRide.isPending}>
+                {joinRide.isPending ? "Requesting..." : "Join ride"}
+              </Button>
+            ) : null}
+            {!isHost && membership && membership.status !== "LEFT" ? (
+              <Button
+                variant="outline"
+                onClick={() => leaveRide.mutate()}
+                disabled={leaveRide.isPending}
+              >
+                Leave ride
+              </Button>
+            ) : null}
+          </div>
+          {isHost && !canStart && (active.status === "PUBLISHED" || active.status === "FULL") ? (
+            <p className="text-xs text-muted-foreground">
+              Starts {meetupTime.toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
+            </p>
           ) : null}
-          {isHost && active.status === "ONGOING" ? (
-            <Button
-              variant="outline"
-              onClick={() => rideAction.mutate({ action: "end" })}
-              disabled={rideAction.isPending}
-            >
-              <FlagIcon className="size-3.5" /> End ride
-            </Button>
-          ) : null}
-          {!isHost && !membership ? (
-            <Button onClick={() => joinRide.mutate()} disabled={joinRide.isPending}>
-              {joinRide.isPending ? "Requesting..." : "Join ride"}
-            </Button>
-          ) : null}
-          {!isHost && membership && membership.status !== "LEFT" ? (
-            <Button
-              variant="outline"
-              onClick={() => leaveRide.mutate()}
-              disabled={leaveRide.isPending}
-            >
-              Leave ride
-            </Button>
+          {rideAction.error ? (
+            <p className="text-xs text-destructive">{rideAction.error.message}</p>
           ) : null}
         </div>
       </div>

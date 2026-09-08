@@ -1,8 +1,12 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { HomeUserMenu } from "@/components/shared/home-user-menu";
+import { getCurrentUser } from "@/lib/auth";
 
-export default function MarketingLayout({ children }: { children: React.ReactNode }) {
+export default async function MarketingLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser();
+
   return (
     <div className="flex min-h-full flex-1 flex-col bg-background">
       <header className="sticky top-0 z-40 border-b border-white/5 bg-background/80 backdrop-blur-md">
@@ -45,13 +49,19 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             <Link href="/safety" className="text-muted-foreground transition-colors hover:text-foreground">
               Safety
             </Link>
-            <Link href="/sign-in" className="text-muted-foreground transition-colors hover:text-foreground">
-              Sign in
-            </Link>
+            {!user && (
+              <Link href="/sign-in" className="text-muted-foreground transition-colors hover:text-foreground">
+                Sign in
+              </Link>
+            )}
           </nav>
-          <Button asChild size="sm" className="font-medium">
-            <Link href="/sign-up">Join Rydo</Link>
-          </Button>
+          {user ? (
+            <HomeUserMenu user={user} />
+          ) : (
+            <Button asChild size="sm" className="font-medium">
+              <Link href="/sign-up">Join Rydo</Link>
+            </Button>
+          )}
         </div>
       </header>
       <main className="flex flex-1 flex-col">{children}</main>

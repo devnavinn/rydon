@@ -45,12 +45,17 @@ export async function PATCH(
 
   const { action, memberId } = parsed.data;
 
-  if (action === "start") await startRide(rideId);
-  else if (action === "end" || action === "cancel") await endRide(rideId);
-  else if (action === "approve_member" && memberId) {
-    await setMemberStatus(rideId, memberId, "APPROVED");
-  } else if (action === "reject_member" && memberId) {
-    await setMemberStatus(rideId, memberId, "REJECTED");
+  try {
+    if (action === "start") await startRide(rideId);
+    else if (action === "end" || action === "cancel") await endRide(rideId);
+    else if (action === "approve_member" && memberId) {
+      await setMemberStatus(rideId, memberId, "APPROVED");
+    } else if (action === "reject_member" && memberId) {
+      await setMemberStatus(rideId, memberId, "REJECTED");
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Action failed";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 
   const updated = await getRideDetail(rideId);

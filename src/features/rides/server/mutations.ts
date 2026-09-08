@@ -123,6 +123,18 @@ export async function setMemberStatus(
 }
 
 export async function startRide(rideId: string) {
+  const ride = await prisma.ride.findUnique({
+    where: { id: rideId },
+    select: { status: true, meetupTime: true },
+  });
+  if (!ride) throw new Error("Ride not found");
+  if (ride.status !== "PUBLISHED" && ride.status !== "FULL") {
+    throw new Error("Only a published ride can be started");
+  }
+  if (ride.meetupTime > new Date()) {
+    throw new Error("This ride can't be started before its meetup time");
+  }
+
   return prisma.$transaction([
     prisma.ride.update({ where: { id: rideId }, data: { status: "ONGOING" } }),
     prisma.rideGroup.update({
@@ -133,6 +145,12 @@ export async function startRide(rideId: string) {
 }
 
 export async function endRide(rideId: string) {
+  const ride = await prisma.ride.findUnique({ where: { id: rideId }, select: { status: true } });
+  if (!ride) throw new Error("Ride not found");
+  if (ride.status !== "ONGOING") {
+    throw new Error("Only a ride that has started can be ended");
+  }
+
   return prisma.$transaction([
     prisma.ride.update({ where: { id: rideId }, data: { status: "COMPLETED" } }),
     prisma.rideGroup.update({
