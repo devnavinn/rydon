@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { Nav, MobileTabBar } from "@/components/shared/nav";
 import { UserMenu } from "@/components/shared/user-menu";
+import { NotificationBell } from "@/components/shared/notification-bell";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -33,7 +34,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </Link>
           <Nav />
         </div>
-        <UserMenu user={user} />
+        <div className="flex shrink-0 items-center gap-1">
+          <NotificationBell />
+          <UserMenu user={user} />
+        </div>
       </header>
       <main className="flex flex-1 flex-col pb-16 md:pb-0">{children}</main>
       <MobileTabBar />
