@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,72 +49,74 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* "Garage" — a dark, road-worn palette with a road-flare amber accent.
+     Rydo commits to this single identity rather than a light/dark toggle. */
+  --background: oklch(0.14 0.012 55);
+  --foreground: oklch(0.96 0.006 80);
+  --card: oklch(0.19 0.014 55);
+  --card-foreground: oklch(0.96 0.006 80);
+  --popover: oklch(0.185 0.014 55);
+  --popover-foreground: oklch(0.96 0.006 80);
+  --primary: oklch(0.74 0.16 55);
+  --primary-foreground: oklch(0.16 0.02 55);
+  --secondary: oklch(0.26 0.012 55);
+  --secondary-foreground: oklch(0.96 0.006 80);
+  --muted: oklch(0.22 0.012 55);
+  --muted-foreground: oklch(0.64 0.02 65);
+  --accent: oklch(0.27 0.03 55);
+  --accent-foreground: oklch(0.96 0.006 80);
+  --destructive: oklch(0.62 0.21 25);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 13%);
+  --ring: oklch(0.74 0.16 55 / 55%);
+  --chart-1: oklch(0.74 0.16 55);
+  --chart-2: oklch(0.6 0.14 40);
+  --chart-3: oklch(0.5 0.02 60);
+  --chart-4: oklch(0.38 0.02 60);
+  --chart-5: oklch(0.28 0.02 60);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: oklch(0.17 0.012 55);
+  --sidebar-foreground: oklch(0.96 0.006 80);
+  --sidebar-primary: oklch(0.74 0.16 55);
+  --sidebar-primary-foreground: oklch(0.16 0.02 55);
+  --sidebar-accent: oklch(0.26 0.012 55);
+  --sidebar-accent-foreground: oklch(0.96 0.006 80);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.74 0.16 55 / 55%);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
+  --background: oklch(0.14 0.012 55);
+  --foreground: oklch(0.96 0.006 80);
+  --card: oklch(0.19 0.014 55);
+  --card-foreground: oklch(0.96 0.006 80);
+  --popover: oklch(0.185 0.014 55);
+  --popover-foreground: oklch(0.96 0.006 80);
+  --primary: oklch(0.74 0.16 55);
+  --primary-foreground: oklch(0.16 0.02 55);
+  --secondary: oklch(0.26 0.012 55);
+  --secondary-foreground: oklch(0.96 0.006 80);
+  --muted: oklch(0.22 0.012 55);
+  --muted-foreground: oklch(0.64 0.02 65);
+  --accent: oklch(0.27 0.03 55);
+  --accent-foreground: oklch(0.96 0.006 80);
+  --destructive: oklch(0.62 0.21 25);
   --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --input: oklch(1 0 0 / 13%);
+  --ring: oklch(0.74 0.16 55 / 55%);
+  --chart-1: oklch(0.74 0.16 55);
+  --chart-2: oklch(0.6 0.14 40);
+  --chart-3: oklch(0.5 0.02 60);
+  --chart-4: oklch(0.38 0.02 60);
+  --chart-5: oklch(0.28 0.02 60);
+  --sidebar: oklch(0.17 0.012 55);
+  --sidebar-foreground: oklch(0.96 0.006 80);
+  --sidebar-primary: oklch(0.74 0.16 55);
+  --sidebar-primary-foreground: oklch(0.16 0.02 55);
+  --sidebar-accent: oklch(0.26 0.012 55);
+  --sidebar-accent-foreground: oklch(0.96 0.006 80);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: oklch(0.74 0.16 55 / 55%);
 }
 
 @layer base {
@@ -126,5 +128,37 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer utilities {
+  /* Subtle diagonal asphalt-stripe texture for section backgrounds. */
+  .bg-garage-stripes {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      oklch(1 0 0 / 3%),
+      oklch(1 0 0 / 3%) 1px,
+      transparent 1px,
+      transparent 14px
+    );
+  }
+
+  /* Radial amber glow, used behind hero content / accent blobs. */
+  .bg-garage-glow {
+    background-image: radial-gradient(
+      60% 50% at 50% 0%,
+      oklch(0.74 0.16 55 / 22%),
+      transparent 70%
+    );
+  }
+
+  /* Fine grain overlay for texture on large dark surfaces. */
+  .bg-grain {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+    background-size: 120px 120px;
+  }
+
+  .text-balance {
+    text-wrap: balance;
   }
 }
