@@ -1,10 +1,11 @@
 import { z } from "zod";
-import { RideStyle } from "@prisma/client";
+
+import { RIDE_STYLES } from "@/lib/enums";
 
 export const onboardingSchema = z.object({
   fullName: z.string().min(2, "At least 2 characters").max(60),
   city: z.string().min(2).max(60).optional().or(z.literal("")),
-  ridingStyle: z.enum(RideStyle).optional(),
+  ridingStyle: z.enum(RIDE_STYLES).optional(),
   preferredRadiusKm: z.coerce.number().int().min(1).max(200).default(25),
   latitude: z.coerce.number().min(-90).max(90).optional(),
   longitude: z.coerce.number().min(-180).max(180).optional(),
@@ -19,7 +20,7 @@ export const nearbyRidersQuerySchema = z.object({
   lat: z.coerce.number().min(-90).max(90),
   lng: z.coerce.number().min(-180).max(180),
   radiusKm: z.coerce.number().int().min(1).max(300).default(25),
-  style: z.enum(RideStyle).optional(),
+  style: z.enum(RIDE_STYLES).optional(),
 });
 
 export type NearbyRidersQuery = z.infer<typeof nearbyRidersQuerySchema>;

@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { RideStyle, RideVisibility } from "@prisma/client";
+
+import { RIDE_STYLES, RIDE_VISIBILITIES } from "@/lib/enums";
 
 export const nearbyRidesQuerySchema = z.object({
   lat: z.coerce.number().min(-90).max(90),
@@ -22,8 +23,8 @@ export const createRideSchema = z
     destinationLongitude: z.number().min(-180).max(180),
     rideDate: z.string().min(1, "Pick a date"),
     meetupTime: z.string().min(1, "Pick a time"),
-    style: z.enum(RideStyle),
-    visibility: z.enum(RideVisibility).default("PUBLIC"),
+    style: z.enum(RIDE_STYLES),
+    visibility: z.enum(RIDE_VISIBILITIES).default("PUBLIC"),
     maxRiders: z.number().int().min(2).max(200).default(10),
     minRiders: z.number().int().min(1).max(200).default(2),
     requiresApproval: z.boolean().default(true),
