@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Map, Route, PlusCircle, User } from "lucide-react";
+import { LayoutDashboard, Users, Map, Route, PlusCircle, User, Settings } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -13,6 +13,7 @@ const LINKS = [
   { href: "/rides", label: "Rides", icon: Route },
   { href: "/rides/create", label: "Create Ride", icon: PlusCircle },
   { href: "/profile", label: "Profile", icon: User },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function Nav() {
@@ -40,7 +41,7 @@ export function Nav() {
   );
 }
 
-const TAB_LINKS = LINKS.filter((link) => link.href !== "/profile");
+const TAB_LINKS = LINKS.filter((link) => link.href !== "/profile" && link.href !== "/settings");
 
 export function MobileTabBar() {
   const pathname = usePathname();
