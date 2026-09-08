@@ -13,6 +13,8 @@ import {
 import { useCreateRide } from "@/features/rides/mutations";
 import { MapView } from "@/components/map/map-view";
 import type { MapMarker } from "@/components/map/rider-map";
+import { LocationSearchInput } from "@/components/shared/location-search-input";
+import type { PlaceSuggestion } from "@/features/geo/photon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -84,6 +86,20 @@ export function CreateRideForm({ center }: { center: [number, number] }) {
       setValue("destinationLatitude", lat, { shouldValidate: true });
       setValue("destinationLongitude", lng, { shouldValidate: true });
     }
+  }
+
+  function handleStartSelect(place: PlaceSuggestion) {
+    setValue("startLocationName", place.label, { shouldValidate: true });
+    setValue("startLatitude", place.lat, { shouldValidate: true });
+    setValue("startLongitude", place.lng, { shouldValidate: true });
+    setPickTarget("start");
+  }
+
+  function handleDestinationSelect(place: PlaceSuggestion) {
+    setValue("destinationName", place.label, { shouldValidate: true });
+    setValue("destinationLatitude", place.lat, { shouldValidate: true });
+    setValue("destinationLongitude", place.lng, { shouldValidate: true });
+    setPickTarget("destination");
   }
 
   return (
@@ -194,8 +210,39 @@ export function CreateRideForm({ center }: { center: [number, number] }) {
 
       <Card>
         <CardContent className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium">Route</p>
+          <p className="text-sm font-medium">Route</p>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="startLocationName">Meetup point</Label>
+              <LocationSearchInput
+                id="startLocationName"
+                placeholder="Search for the meetup point..."
+                near={{ lat: center[0], lng: center[1] }}
+                onSelect={handleStartSelect}
+              />
+              {errors.startLocationName ? (
+                <p className="text-sm text-destructive">{errors.startLocationName.message}</p>
+              ) : null}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="destinationName">Destination</Label>
+              <LocationSearchInput
+                id="destinationName"
+                placeholder="Search for the destination..."
+                near={{ lat: startLat ?? center[0], lng: startLng ?? center[1] }}
+                onSelect={handleDestinationSelect}
+              />
+              {errors.destinationName ? (
+                <p className="text-sm text-destructive">{errors.destinationName.message}</p>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-1">
+            <p className="text-xs text-muted-foreground">
+              Not quite right? Click the map to fine-tune the {pickTarget === "start" ? "meetup point" : "destination"}.
+            </p>
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -203,7 +250,7 @@ export function CreateRideForm({ center }: { center: [number, number] }) {
                 variant={pickTarget === "start" ? "default" : "outline"}
                 onClick={() => setPickTarget("start")}
               >
-                <MapPin className="size-3.5" /> Set start
+                <MapPin className="size-3.5" /> Start
               </Button>
               <Button
                 type="button"
@@ -211,40 +258,12 @@ export function CreateRideForm({ center }: { center: [number, number] }) {
                 variant={pickTarget === "destination" ? "default" : "outline"}
                 onClick={() => setPickTarget("destination")}
               >
-                <Flag className="size-3.5" /> Set destination
+                <Flag className="size-3.5" /> Destination
               </Button>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Click the map to place the {pickTarget === "start" ? "meetup point" : "destination"}.
-          </p>
           <div className="overflow-hidden rounded-xl border" style={{ height: 320 }}>
             <MapView center={center} zoom={11} markers={markers} onMapClick={handleMapClick} />
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="startLocationName">Meetup point name</Label>
-              <Input
-                id="startLocationName"
-                placeholder="Indiranagar 100ft Road"
-                {...register("startLocationName")}
-              />
-              {errors.startLocationName ? (
-                <p className="text-sm text-destructive">{errors.startLocationName.message}</p>
-              ) : null}
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="destinationName">Destination name</Label>
-              <Input
-                id="destinationName"
-                placeholder="Nandi Hills"
-                {...register("destinationName")}
-              />
-              {errors.destinationName ? (
-                <p className="text-sm text-destructive">{errors.destinationName.message}</p>
-              ) : null}
-            </div>
           </div>
         </CardContent>
       </Card>
