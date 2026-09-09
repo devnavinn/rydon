@@ -21,7 +21,7 @@ export async function sendVerificationEmail(userId: string, email: string, usern
 
   const verifyUrl = `${await getAppUrl()}/verify-email?token=${token}`;
 
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from: env.EMAIL_FROM,
     to: email,
     subject: "Verify your email for Rydo",
@@ -32,6 +32,11 @@ export async function sendVerificationEmail(userId: string, email: string, usern
       <p>This link expires in 24 hours. If you didn't create a Rydo account, you can ignore this email.</p>
     `,
   });
+
+  // The Resend SDK reports API-level failures (e.g. unverified sender domain)
+  // via this field rather than throwing, so callers relying on try/catch
+  // would otherwise see a false success.
+  if (error) throw new Error(error.message);
 }
 
 export type VerifyResult = { ok: true } | { ok: false; reason: string };
