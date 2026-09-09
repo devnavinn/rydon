@@ -6,6 +6,7 @@ import { Send } from "lucide-react";
 
 import { useMessages, useMessagesStream, flattenMessages } from "@/features/chat/queries";
 import { useSendMessage } from "@/features/chat/mutations";
+import { useBlockedUserIds } from "@/features/blocking/queries";
 import type { ChatMessagesPage } from "@/features/chat/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,11 @@ export function ChatRoom({
   useMessagesStream(groupId, currentUserId);
   const sendMessage = useSendMessage(groupId, currentUser);
 
-  const messages = flattenMessages(data);
+  const blockedIds = useBlockedUserIds();
+  // Client-side only — hides the message from this viewer's UI, not a
+  // server-enforced boundary. Good enough for a mutual-block UX; someone
+  // determined could still see it via devtools.
+  const messages = flattenMessages(data).filter((m) => !blockedIds.has(m.senderId));
   const [draft, setDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const lastMessageId = messages.at(-1)?.id;

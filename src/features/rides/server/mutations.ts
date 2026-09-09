@@ -7,6 +7,7 @@ import {
   createNotification,
   createNotifications,
 } from "@/features/notifications/server/mutations";
+import { isBlockedEitherWay } from "@/features/blocking/server/queries";
 
 export async function createRide(hostId: string, input: CreateRideInput) {
   const base = slugify(input.title);
@@ -80,6 +81,10 @@ export async function joinRide(rideId: string, userId: string) {
   if (!ride) throw new Error("Ride not found");
   if (ride.status !== "PUBLISHED" && ride.status !== "FULL") {
     throw new Error("This ride is not open to join");
+  }
+  // Deliberately vague — don't confirm to the requester that a block exists.
+  if (await isBlockedEitherWay(ride.hostId, userId)) {
+    throw new Error("This ride isn't available to you");
   }
 
   const member = await prisma.rideMember.upsert({

@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
+import { hasBlocked } from "@/features/blocking/server/queries";
+import { BlockButton } from "@/components/riders/block-button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,30 +15,38 @@ export default async function RiderProfilePage({
 }) {
   const { username } = await params;
 
-  const user = await prisma.user.findUnique({
-    where: { username },
-    select: {
-      username: true,
-      lastSeenAt: true,
-      riderProfile: {
-        select: {
-          fullName: true,
-          bio: true,
-          city: true,
-          state: true,
-          country: true,
-          ridingStyle: true,
-          level: true,
-          totalRides: true,
-          totalDistanceKm: true,
-          yearsRiding: true,
+  const [currentUser, user] = await Promise.all([
+    getCurrentUser(),
+    prisma.user.findUnique({
+      where: { username },
+      select: {
+        id: true,
+        username: true,
+        lastSeenAt: true,
+        riderProfile: {
+          select: {
+            fullName: true,
+            bio: true,
+            city: true,
+            state: true,
+            country: true,
+            ridingStyle: true,
+            level: true,
+            totalRides: true,
+            totalDistanceKm: true,
+            yearsRiding: true,
+          },
         },
+        bikes: { select: { brand: true, model: true, year: true, isPrimary: true } },
       },
-      bikes: { select: { brand: true, model: true, year: true, isPrimary: true } },
-    },
-  });
+    }),
+  ]);
 
   if (!user || !user.riderProfile) notFound();
+
+  const isOwnProfile = currentUser?.id === user.id;
+  const isBlockedByMe =
+    !isOwnProfile && currentUser ? await hasBlocked(currentUser.id, user.id) : false;
 
   const initials = user.riderProfile.fullName
     .split(" ")
@@ -47,23 +58,28 @@ export default async function RiderProfilePage({
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 p-4">
       <Card>
-        <CardContent className="flex items-center gap-4">
-          <Avatar className="size-16">
-            <AvatarFallback className="text-lg">{initials}</AvatarFallback>
-          </Avatar>
-          <div>
-            <h1 className="font-heading text-2xl tracking-wide">{user.riderProfile.fullName}</h1>
-            <p className="text-sm text-muted-foreground">
-              @{user.username}
-              {user.riderProfile.city ? ` · ${user.riderProfile.city}` : ""}
-            </p>
-            <div className="mt-1.5 flex gap-2">
-              <Badge variant="outline">{user.riderProfile.level}</Badge>
-              {user.riderProfile.ridingStyle ? (
-                <Badge variant="outline">{user.riderProfile.ridingStyle}</Badge>
-              ) : null}
+        <CardContent className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Avatar className="size-16">
+              <AvatarFallback className="text-lg">{initials}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="font-heading text-2xl tracking-wide">{user.riderProfile.fullName}</h1>
+              <p className="text-sm text-muted-foreground">
+                @{user.username}
+                {user.riderProfile.city ? ` · ${user.riderProfile.city}` : ""}
+              </p>
+              <div className="mt-1.5 flex gap-2">
+                <Badge variant="outline">{user.riderProfile.level}</Badge>
+                {user.riderProfile.ridingStyle ? (
+                  <Badge variant="outline">{user.riderProfile.ridingStyle}</Badge>
+                ) : null}
+              </div>
             </div>
           </div>
+          {!isOwnProfile ? (
+            <BlockButton username={user.username} initiallyBlocked={isBlockedByMe} />
+          ) : null}
         </CardContent>
       </Card>
 

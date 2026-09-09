@@ -2,6 +2,7 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 import { boundingBox, haversineDistanceKm } from "@/lib/geo";
+import { getBlockedUserIds } from "@/features/blocking/server/queries";
 import type { NearbyRidersQuery } from "@/features/riders/validators";
 import type { NearbyRider, RiderStatus } from "@/features/riders/types";
 
@@ -19,13 +20,14 @@ export async function findNearbyRiders(
 ): Promise<NearbyRider[]> {
   const center = { lat: query.lat, lng: query.lng };
   const box = boundingBox(center, query.radiusKm);
+  const blockedIds = excludeUserId ? await getBlockedUserIds(excludeUserId) : [];
 
   const profiles = await prisma.riderProfile.findMany({
     where: {
       latitude: { gte: box.minLat, lte: box.maxLat },
       longitude: { gte: box.minLng, lte: box.maxLng },
       ...(query.style ? { ridingStyle: query.style } : {}),
-      ...(excludeUserId ? { userId: { not: excludeUserId } } : {}),
+      ...(excludeUserId ? { userId: { notIn: [excludeUserId, ...blockedIds] } } : {}),
     },
     select: {
       userId: true,

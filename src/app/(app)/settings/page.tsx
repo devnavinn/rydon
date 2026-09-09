@@ -1,9 +1,11 @@
 import { requireUser } from "@/lib/auth";
 import { getOwnProfileDetail } from "@/features/profile/server/queries";
+import { listBlockedUsers } from "@/features/blocking/server/queries";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { BikesSection } from "@/components/settings/bikes-section";
 import { EmergencyContactsSection } from "@/components/settings/emergency-contacts-section";
 import { EmergencySharingCard } from "@/components/settings/emergency-sharing-card";
+import { BlockedRidersSection } from "@/components/settings/blocked-riders-section";
 import {
   Card,
   CardContent,
@@ -14,7 +16,10 @@ import {
 
 export default async function SettingsPage() {
   const user = await requireUser();
-  const { profile, bikes, emergencyContacts } = await getOwnProfileDetail(user.id);
+  const [{ profile, bikes, emergencyContacts }, blockedUsers] = await Promise.all([
+    getOwnProfileDetail(user.id),
+    listBlockedUsers(user.id),
+  ]);
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 p-4">
@@ -64,6 +69,18 @@ export default async function SettingsPage() {
           <div className="border-t border-white/8 pt-4">
             <EmergencyContactsSection contacts={emergencyContacts} />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Blocked riders</CardTitle>
+          <CardDescription>
+            Manage who you&apos;ve blocked from discovery and shared rides.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BlockedRidersSection initialData={blockedUsers} />
         </CardContent>
       </Card>
     </div>
