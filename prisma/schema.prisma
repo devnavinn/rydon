@@ -132,6 +132,7 @@ model User {
   notifications     Notification[]
   blockedBy         UserBlock[]        @relation("BlockedUser")
   blocking          UserBlock[]        @relation("BlockingUser")
+  savedRides        SavedRide[]
 
   @@index([email])
   @@index([phone])
@@ -226,6 +227,7 @@ model Ride {
   members             RideMember[]
   invites             RideInvite[]
   group               RideGroup?
+  savedBy             SavedRide[]
 
   @@index([hostId])
   @@index([rideDate, status])
@@ -393,6 +395,19 @@ model EmergencyContact {
   user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isPrimary])
+}
+
+model SavedRide {
+  id            String     @id @default(cuid())
+  userId         String
+  rideId         String
+  createdAt      DateTime   @default(now())
+
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ride           Ride       @relation(fields: [rideId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, rideId])
+  @@index([rideId])
 }
 
 model Notification {

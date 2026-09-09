@@ -7,6 +7,7 @@ import { useGeolocation, type GeoPosition } from "@/hooks/use-geolocation";
 import { useNearbyRides } from "@/features/rides/queries";
 import { useDiscoveryStore } from "@/store/discovery-store";
 import { RadiusFilter } from "@/components/riders/radius-filter";
+import { SaveRideButton } from "@/components/rides/save-ride-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceKm } from "@/lib/geo";
@@ -38,9 +39,12 @@ export function RidesListView({ fallback }: { fallback: GeoPosition | null }) {
                 <CardContent className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-medium">{ride.title}</p>
-                    <span className="text-sm text-muted-foreground">
-                      {formatDistanceKm(ride.distanceKm)}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm text-muted-foreground">
+                        {formatDistanceKm(ride.distanceKm)}
+                      </span>
+                      <SaveRideButton rideId={ride.id} className="-my-2" />
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {ride.startLocationName} → {ride.destinationName}

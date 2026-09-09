@@ -2,7 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Map, Route, PlusCircle, User, Settings } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  Map,
+  Route,
+  PlusCircle,
+  User,
+  Settings,
+  Bookmark,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -11,6 +20,7 @@ const LINKS = [
   { href: "/riders", label: "Riders", icon: Users },
   { href: "/map", label: "Map", icon: Map },
   { href: "/rides", label: "Rides", icon: Route },
+  { href: "/saved-rides", label: "Saved", icon: Bookmark },
   { href: "/rides/create", label: "Create Ride", icon: PlusCircle },
   { href: "/profile", label: "Profile", icon: User },
   { href: "/settings", label: "Settings", icon: Settings },

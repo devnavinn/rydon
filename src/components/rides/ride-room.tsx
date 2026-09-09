@@ -16,6 +16,7 @@ import { MapView } from "@/components/map/map-view";
 import type { MapMarker } from "@/components/map/rider-map";
 import { InviteList } from "@/components/rides/invite-list";
 import { ProgressPanel } from "@/components/rides/progress-panel";
+import { SaveRideButton } from "@/components/rides/save-ride-button";
 
 export function RideRoom({
   rideId,
@@ -91,6 +92,7 @@ export function RideRoom({
             <Badge variant={active.status === "ONGOING" ? "default" : "secondary"}>
               {active.status}
             </Badge>
+            <SaveRideButton rideId={rideId} />
           </div>
           <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
