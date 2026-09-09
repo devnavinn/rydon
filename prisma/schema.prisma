@@ -133,6 +133,7 @@ model User {
   blockedBy         UserBlock[]        @relation("BlockedUser")
   blocking          UserBlock[]        @relation("BlockingUser")
   savedRides        SavedRide[]
+  trackingLinks     TrackingLink[]
 
   @@index([email])
   @@index([phone])
@@ -228,6 +229,7 @@ model Ride {
   invites             RideInvite[]
   group               RideGroup?
   savedBy             SavedRide[]
+  trackingLinks       TrackingLink[]
 
   @@index([hostId])
   @@index([rideDate, status])
@@ -395,6 +397,21 @@ model EmergencyContact {
   user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isPrimary])
+}
+
+model TrackingLink {
+  id            String     @id @default(cuid())
+  token         String     @unique
+  rideId         String
+  userId         String
+  createdAt      DateTime   @default(now())
+  expiresAt      DateTime
+  revokedAt      DateTime?
+
+  ride           Ride       @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([rideId, userId])
 }
 
 model SavedRide {

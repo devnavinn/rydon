@@ -17,15 +17,18 @@ import type { MapMarker } from "@/components/map/rider-map";
 import { InviteList } from "@/components/rides/invite-list";
 import { ProgressPanel } from "@/components/rides/progress-panel";
 import { SaveRideButton } from "@/components/rides/save-ride-button";
+import { ShareLocationCard } from "@/components/rides/share-location-card";
 
 export function RideRoom({
   rideId,
   initialRide,
   currentUserId,
+  emergencySharingOn,
 }: {
   rideId: string;
   initialRide: RideDetail;
   currentUserId: string;
+  emergencySharingOn: boolean;
 }) {
   const { data: ride } = useRideDetail(rideId, initialRide);
   const active = ride ?? initialRide;
@@ -199,6 +202,14 @@ export function RideRoom({
         </Card>
 
         <div className="flex flex-col gap-4">
+          {isHost || (membership && membership.status !== "LEFT") ? (
+            <Card>
+              <CardContent>
+                <ShareLocationCard rideId={rideId} emergencySharingOn={emergencySharingOn} />
+              </CardContent>
+            </Card>
+          ) : null}
+
           {active.status === "ONGOING" ? (
             <Card>
               <CardContent>

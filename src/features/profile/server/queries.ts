@@ -19,3 +19,11 @@ export async function getOwnProfileDetail(userId: string) {
 
   return { profile, bikes, emergencyContacts };
 }
+
+export async function getEmergencySharingOn(userId: string): Promise<boolean> {
+  const profile = await prisma.riderProfile.findUnique({
+    where: { userId },
+    select: { emergencySharingOn: true },
+  });
+  return profile?.emergencySharingOn ?? false;
+}

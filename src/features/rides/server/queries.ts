@@ -5,6 +5,14 @@ import { boundingBox, haversineDistanceKm } from "@/lib/geo";
 import type { NearbyRidesQuery } from "@/features/rides/validators";
 import type { NearbyRide, RideDetail } from "@/features/rides/types";
 
+export async function isRideMember(rideId: string, userId: string): Promise<boolean> {
+  const member = await prisma.rideMember.findUnique({
+    where: { rideId_userId: { rideId, userId } },
+    select: { status: true },
+  });
+  return member?.status === "JOINED";
+}
+
 export async function findNearbyRides(query: NearbyRidesQuery): Promise<NearbyRide[]> {
   const center = { lat: query.lat, lng: query.lng };
   const box = boundingBox(center, query.radiusKm);

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/auth";
 import { getRideDetail } from "@/features/rides/server/queries";
+import { getEmergencySharingOn } from "@/features/profile/server/queries";
 import { RideRoom } from "@/components/rides/ride-room";
 
 export default async function RideRoomPage({
@@ -14,9 +15,16 @@ export default async function RideRoomPage({
 
   if (!ride || !user) notFound();
 
+  const emergencySharingOn = await getEmergencySharingOn(user.id);
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 p-4">
-      <RideRoom rideId={rideId} initialRide={ride} currentUserId={user.id} />
+      <RideRoom
+        rideId={rideId}
+        initialRide={ride}
+        currentUserId={user.id}
+        emergencySharingOn={emergencySharingOn}
+      />
     </div>
   );
 }
