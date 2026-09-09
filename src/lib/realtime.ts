@@ -21,3 +21,43 @@ export function subscribe(room: string, listener: (message: RealtimeMessage) => 
   bus.on(room, listener);
   return () => bus.off(room, listener);
 }
+
+const HEARTBEAT_MS = 25_000;
+
+/** An SSE `Response` that streams every message published to `room` until the request is aborted. */
+export function sseResponse(room: string, request: Request) {
+  const encoder = new TextEncoder();
+
+  let unsubscribe: () => void;
+  let heartbeat: ReturnType<typeof setInterval>;
+
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      const send = (message: RealtimeMessage) => {
+        controller.enqueue(
+          encoder.encode(`event: ${message.event}\ndata: ${JSON.stringify(message.data)}\n\n`)
+        );
+      };
+
+      unsubscribe = subscribe(room, send);
+      heartbeat = setInterval(() => controller.enqueue(encoder.encode(": ping\n\n")), HEARTBEAT_MS);
+    },
+    cancel() {
+      unsubscribe?.();
+      clearInterval(heartbeat);
+    },
+  });
+
+  request.signal.addEventListener("abort", () => {
+    unsubscribe?.();
+    clearInterval(heartbeat);
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+    },
+  });
+}

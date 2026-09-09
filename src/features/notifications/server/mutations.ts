@@ -3,6 +3,9 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { NotificationType, Prisma } from "@prisma/client";
 
+import { publish } from "@/lib/realtime";
+import { toDTO } from "@/features/notifications/server/queries";
+
 export type NotificationInput = {
   userId: string;
   type: NotificationType;
@@ -12,12 +15,20 @@ export type NotificationInput = {
 };
 
 export async function createNotification(input: NotificationInput) {
-  return prisma.notification.create({ data: input });
+  const notification = await prisma.notification.create({ data: input });
+  publish(`user:${input.userId}`, "notification", toDTO(notification));
+  return notification;
 }
 
 export async function createNotifications(inputs: NotificationInput[]) {
-  if (inputs.length === 0) return { count: 0 };
-  return prisma.notification.createMany({ data: inputs });
+  if (inputs.length === 0) return [];
+  const notifications = await prisma.$transaction(
+    inputs.map((input) => prisma.notification.create({ data: input }))
+  );
+  for (const notification of notifications) {
+    publish(`user:${notification.userId}`, "notification", toDTO(notification));
+  }
+  return notifications;
 }
 
 export async function markNotificationRead(userId: string, notificationId: string) {

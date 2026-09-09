@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Bell } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 
-import { useNotifications } from "@/features/notifications/queries";
+import { useNotifications, useNotificationsStream } from "@/features/notifications/queries";
 import {
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
@@ -28,6 +28,7 @@ function notificationHref(notification: NotificationDTO) {
 
 export function NotificationBell() {
   const { data } = useNotifications();
+  useNotificationsStream();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
 

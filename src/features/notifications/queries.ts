@@ -1,8 +1,9 @@
 "use client";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useInfiniteQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 
-import type { NotificationsPage } from "@/features/notifications/types";
+import type { NotificationDTO, NotificationsPage } from "@/features/notifications/types";
 
 async function fetchNotifications(cursor?: string | null): Promise<NotificationsPage> {
   const search = cursor ? `?cursor=${encodeURIComponent(cursor)}` : "";
@@ -20,6 +21,38 @@ export function useNotifications(initialData?: NotificationsPage) {
     initialData: initialData
       ? { pages: [initialData], pageParams: [null] }
       : undefined,
-    refetchInterval: 20_000,
+    // Push delivers new notifications instantly; this is just a safety net
+    // in case the SSE connection drops without reconnecting.
+    refetchInterval: 60_000,
   });
+}
+
+export function useNotificationsStream() {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const source = new EventSource("/api/notifications/stream");
+
+    source.addEventListener("notification", (event) => {
+      const notification = JSON.parse((event as MessageEvent<string>).data) as NotificationDTO;
+
+      queryClient.setQueryData<InfiniteData<NotificationsPage>>(["notifications"], (current) => {
+        if (!current) return current;
+        const [firstPage, ...rest] = current.pages;
+        return {
+          ...current,
+          pages: [
+            {
+              ...firstPage,
+              notifications: [notification, ...firstPage.notifications],
+              unreadCount: firstPage.unreadCount + 1,
+            },
+            ...rest,
+          ],
+        };
+      });
+    });
+
+    return () => source.close();
+  }, [queryClient]);
 }

@@ -6,7 +6,7 @@ import type { Notification } from "@prisma/client";
 
 const PAGE_SIZE = 20;
 
-function toDTO(notification: Notification): NotificationDTO {
+export function toDTO(notification: Notification): NotificationDTO {
   return {
     id: notification.id,
     type: notification.type,

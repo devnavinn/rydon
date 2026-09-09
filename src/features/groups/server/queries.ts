@@ -11,6 +11,14 @@ export async function isGroupMember(groupId: string, userId: string): Promise<bo
   return Boolean(member);
 }
 
+export async function getGroupHeader(groupId: string) {
+  const group = await prisma.rideGroup.findUnique({
+    where: { id: groupId },
+    select: { name: true, rideId: true },
+  });
+  return group;
+}
+
 export async function getLatestPositions(groupId: string): Promise<MemberPosition[]> {
   const pings = await prisma.locationPing.findMany({
     where: { groupId },

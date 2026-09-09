@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Calendar, Clock, Users, Play, Flag as FlagIcon } from "lucide-react";
+import Link from "next/link";
+import { Calendar, Clock, Users, Play, Flag as FlagIcon, MessageCircle } from "lucide-react";
 
 import { useRideDetail } from "@/features/rides/queries";
 import { useJoinRide, useLeaveRide, useRideAction } from "@/features/rides/mutations";
@@ -109,6 +110,13 @@ export function RideRoom({
 
         <div className="flex flex-col items-end gap-1.5">
           <div className="flex gap-2">
+            {active.groupId && (isHost || (membership && membership.status !== "LEFT")) ? (
+              <Button variant="outline" asChild>
+                <Link href={`/chat/${active.groupId}`}>
+                  <MessageCircle className="size-3.5" /> Chat
+                </Link>
+              </Button>
+            ) : null}
             {isHost && (active.status === "PUBLISHED" || active.status === "FULL") ? (
               <Button
                 onClick={() => rideAction.mutate({ action: "start" })}
