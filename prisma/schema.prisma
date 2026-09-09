@@ -134,6 +134,7 @@ model User {
   blocking          UserBlock[]        @relation("BlockingUser")
   savedRides        SavedRide[]
   trackingLinks     TrackingLink[]
+  emailVerificationTokens EmailVerificationToken[]
 
   @@index([email])
   @@index([phone])
@@ -397,6 +398,18 @@ model EmergencyContact {
   user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isPrimary])
+}
+
+model EmailVerificationToken {
+  id            String     @id @default(cuid())
+  token         String     @unique
+  userId         String
+  createdAt      DateTime   @default(now())
+  expiresAt      DateTime
+
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model TrackingLink {

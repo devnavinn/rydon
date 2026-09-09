@@ -15,4 +15,5 @@ export type NearbyRider = {
   longitude: number;
   status: RiderStatus;
   bike: { brand: string; model: string; year: number | null } | null;
+  isVerified: boolean;
 };

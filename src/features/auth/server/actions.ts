@@ -5,7 +5,9 @@ import { AuthError } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { signIn, signOut } from "@/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { signInSchema, signUpSchema } from "@/features/auth/validators";
+import { sendVerificationEmail } from "@/features/auth/server/verification";
 
 export type ActionState = { error: string | null };
 
@@ -32,7 +34,7 @@ export async function signUpAction(_prev: ActionState, formData: FormData): Prom
 
   const passwordHash = await hashPassword(password);
 
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       username,
       email,
@@ -41,6 +43,13 @@ export async function signUpAction(_prev: ActionState, formData: FormData): Prom
     },
     select: { id: true },
   });
+
+  try {
+    await sendVerificationEmail(user.id, email, username);
+  } catch {
+    // Don't block account creation on a flaky email provider — the nudge
+    // banner's "resend" button covers this case.
+  }
 
   try {
     await signIn("credentials", { identifier: username, password, redirectTo: "/onboarding" });
@@ -78,4 +87,23 @@ export async function signInAction(_prev: ActionState, formData: FormData): Prom
 
 export async function signOutAction() {
   await signOut({ redirectTo: "/sign-in" });
+}
+
+export type ResendVerificationState = { error: string | null; sent: boolean };
+
+export async function resendVerificationEmailAction(
+  _prev: ResendVerificationState
+): Promise<ResendVerificationState> {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Not signed in", sent: false };
+  if (user.isVerified) return { error: null, sent: false };
+  if (!user.email) return { error: "Your account has no email on file", sent: false };
+
+  try {
+    await sendVerificationEmail(user.id, user.email, user.username);
+  } catch {
+    return { error: "Couldn't send the email right now — try again in a bit.", sent: false };
+  }
+
+  return { error: null, sent: true };
 }

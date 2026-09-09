@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BadgeCheck } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,7 +25,12 @@ export function RiderCard({ rider }: { rider: NearbyRider }) {
           </Avatar>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
-              <p className="truncate font-medium">{rider.fullName}</p>
+              <span className="flex min-w-0 items-center gap-1">
+                <p className="truncate font-medium">{rider.fullName}</p>
+                {rider.isVerified ? (
+                  <BadgeCheck className="size-3.5 shrink-0 text-primary" aria-label="Verified" />
+                ) : null}
+              </span>
               <span className="shrink-0 text-sm font-medium text-muted-foreground">
                 {formatDistanceKm(rider.distanceKm)}
               </span>

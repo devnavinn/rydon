@@ -5,6 +5,7 @@ export type SessionUser = {
   username: string;
   email: string | null;
   role: UserRole;
+  isVerified: boolean;
   riderProfile: {
     id: string;
     fullName: string;

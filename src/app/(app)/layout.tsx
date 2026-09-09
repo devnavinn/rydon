@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { Nav, MobileTabBar } from "@/components/shared/nav";
 import { UserMenu } from "@/components/shared/user-menu";
 import { NotificationBell } from "@/components/shared/notification-bell";
+import { VerifyEmailBanner } from "@/components/shared/verify-email-banner";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -39,6 +40,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <UserMenu user={user} />
         </div>
       </header>
+      {!user.isVerified ? <VerifyEmailBanner /> : null}
       <main className="flex flex-1 flex-col pb-16 md:pb-0">{children}</main>
       <MobileTabBar />
     </div>

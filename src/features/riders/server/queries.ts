@@ -43,6 +43,7 @@ export async function findNearbyRiders(
           username: true,
           lastSeenAt: true,
           isActive: true,
+          isVerified: true,
           bikes: {
             where: { isPrimary: true },
             select: { brand: true, model: true, year: true },
@@ -87,6 +88,7 @@ export async function findNearbyRiders(
       longitude: point.lng,
       status: deriveStatus(profile.user.lastSeenAt, profile.user.rideMembers.length > 0),
       bike,
+      isVerified: profile.user.isVerified,
     });
   }
 

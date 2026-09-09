@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { BadgeCheck } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
@@ -23,6 +24,7 @@ export default async function RiderProfilePage({
         id: true,
         username: true,
         lastSeenAt: true,
+        isVerified: true,
         riderProfile: {
           select: {
             fullName: true,
@@ -64,7 +66,12 @@ export default async function RiderProfilePage({
               <AvatarFallback className="text-lg">{initials}</AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="font-heading text-2xl tracking-wide">{user.riderProfile.fullName}</h1>
+              <div className="flex items-center gap-1.5">
+                <h1 className="font-heading text-2xl tracking-wide">{user.riderProfile.fullName}</h1>
+                {user.isVerified ? (
+                  <BadgeCheck className="size-5 text-primary" aria-label="Verified" />
+                ) : null}
+              </div>
               <p className="text-sm text-muted-foreground">
                 @{user.username}
                 {user.riderProfile.city ? ` · ${user.riderProfile.city}` : ""}

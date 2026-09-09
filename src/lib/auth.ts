@@ -13,6 +13,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
       username: true,
       email: true,
       role: true,
+      isVerified: true,
       riderProfile: {
         select: {
           id: true,
@@ -34,6 +35,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
     username: user.username,
     email: user.email,
     role: user.role,
+    isVerified: user.isVerified,
     riderProfile: user.riderProfile
       ? {
           id: user.riderProfile.id,
