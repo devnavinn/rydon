@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+import { haversineDistanceKm } from "@/lib/geo";
 
 export type GeoPosition = { lat: number; lng: number };
 
@@ -8,6 +10,12 @@ export type GeolocationState = {
   position: GeoPosition | null;
   status: "idle" | "loading" | "success" | "denied" | "unsupported";
 };
+
+// GPS readings jitter by a few meters even standing still. Anything under
+// this is noise, not movement — committing it would change `position`'s
+// value, which changes query keys (e.g. useNearbyRiders) and makes pages
+// that key data off it look like they keep reloading.
+const MIN_MOVEMENT_KM = 0.03;
 
 /**
  * Wraps the browser Geolocation API. Callers should pass a `fallback`
@@ -19,6 +27,7 @@ export function useGeolocation(fallback?: GeoPosition | null) {
     position: fallback ?? null,
     status: "idle",
   });
+  const lastCommittedRef = useRef<GeoPosition | null>(null);
 
   useEffect(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -31,10 +40,12 @@ export function useGeolocation(fallback?: GeoPosition | null) {
 
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        setState({
-          position: { lat: pos.coords.latitude, lng: pos.coords.longitude },
-          status: "success",
-        });
+        const next = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        const last = lastCommittedRef.current;
+        if (last && haversineDistanceKm(last, next) < MIN_MOVEMENT_KM) return;
+
+        lastCommittedRef.current = next;
+        setState({ position: next, status: "success" });
       },
       () => {
         setState((s) => ({ ...s, status: "denied" }));

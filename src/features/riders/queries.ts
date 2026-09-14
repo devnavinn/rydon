@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import type { RideStyle } from "@prisma/client";
 
 import type { NearbyRider } from "@/features/riders/types";
@@ -32,5 +32,9 @@ export function useNearbyRiders(params: NearbyRidersParams) {
     queryFn: () => fetchNearbyRiders(params),
     enabled: params.lat !== null && params.lng !== null,
     refetchInterval: 20_000,
+    // A real position/radius/style change still re-keys the query; keep
+    // showing the last result while the new one loads instead of blanking
+    // the list back to the loading state.
+    placeholderData: keepPreviousData,
   });
 }
