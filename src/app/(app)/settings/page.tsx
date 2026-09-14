@@ -3,6 +3,7 @@ import { getOwnProfileDetail } from "@/features/profile/server/queries";
 import { listBlockedUsers } from "@/features/blocking/server/queries";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { BikesSection } from "@/components/settings/bikes-section";
+import { LocationSyncCard } from "@/components/settings/location-sync-card";
 import { EmergencyContactsSection } from "@/components/settings/emergency-contacts-section";
 import { EmergencySharingCard } from "@/components/settings/emergency-sharing-card";
 import { BlockedRidersSection } from "@/components/settings/blocked-riders-section";
@@ -33,7 +34,7 @@ export default async function SettingsPage() {
           <CardTitle>Rider profile</CardTitle>
           <CardDescription>How the brotherhood sees you.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-4">
           <ProfileForm
             profile={{
               fullName: profile.fullName,
@@ -46,6 +47,11 @@ export default async function SettingsPage() {
               yearsRiding: profile.yearsRiding,
             }}
           />
+          <div className="border-t border-white/8 pt-4">
+            <LocationSyncCard
+              hasLocation={profile.latitude != null && profile.longitude != null}
+            />
+          </div>
         </CardContent>
       </Card>
 

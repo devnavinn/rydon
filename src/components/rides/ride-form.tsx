@@ -10,7 +10,8 @@ import {
   type CreateRideInput,
   type CreateRideFormInput,
 } from "@/features/rides/validators";
-import { useCreateRide } from "@/features/rides/mutations";
+import { useCreateRide, useUpdateRide } from "@/features/rides/mutations";
+import type { RideDetail } from "@/features/rides/types";
 import { MapView } from "@/components/map/map-view";
 import type { MapMarker } from "@/components/map/rider-map";
 import { LocationSearchInput } from "@/components/shared/location-search-input";
@@ -41,9 +42,16 @@ const RIDE_STYLES = [
 
 type PickTarget = "start" | "destination";
 
-export function CreateRideForm({ center }: { center: [number, number] }) {
+function toTimeInputValue(iso: string) {
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+export function RideForm({ center, ride }: { center: [number, number]; ride?: RideDetail }) {
   const [pickTarget, setPickTarget] = useState<PickTarget>("start");
   const createRide = useCreateRide();
+  const updateRide = useUpdateRide(ride?.id ?? "");
+  const activeMutation = ride ? updateRide : createRide;
 
   const {
     register,
@@ -53,19 +61,40 @@ export function CreateRideForm({ center }: { center: [number, number] }) {
     formState: { errors },
   } = useForm<CreateRideFormInput, unknown, CreateRideInput>({
     resolver: zodResolver(createRideSchema),
-    defaultValues: {
-      style: "WEEKEND",
-      visibility: "PUBLIC",
-      maxRiders: 10,
-      minRiders: 2,
-      requiresApproval: true,
-      allowPillion: false,
-      helmetRequired: true,
-      startLatitude: center[0],
-      startLongitude: center[1],
-      destinationLatitude: center[0],
-      destinationLongitude: center[1],
-    },
+    defaultValues: ride
+      ? {
+          title: ride.title,
+          description: ride.description ?? "",
+          notes: ride.notes ?? "",
+          startLocationName: ride.startLocationName,
+          startLatitude: ride.startLatitude,
+          startLongitude: ride.startLongitude,
+          destinationName: ride.destinationName,
+          destinationLatitude: ride.destinationLatitude,
+          destinationLongitude: ride.destinationLongitude,
+          rideDate: ride.rideDate.slice(0, 10),
+          meetupTime: toTimeInputValue(ride.meetupTime),
+          style: ride.style,
+          visibility: ride.visibility,
+          maxRiders: ride.maxRiders,
+          minRiders: ride.minRiders,
+          requiresApproval: ride.requiresApproval,
+          allowPillion: ride.allowPillion,
+          helmetRequired: ride.helmetRequired,
+        }
+      : {
+          style: "WEEKEND",
+          visibility: "PUBLIC",
+          maxRiders: 10,
+          minRiders: 2,
+          requiresApproval: true,
+          allowPillion: false,
+          helmetRequired: true,
+          startLatitude: center[0],
+          startLongitude: center[1],
+          destinationLatitude: center[0],
+          destinationLongitude: center[1],
+        },
   });
 
   const startLat = watch("startLatitude");
@@ -104,7 +133,7 @@ export function CreateRideForm({ center }: { center: [number, number] }) {
 
   return (
     <form
-      onSubmit={handleSubmit((data) => createRide.mutate(data))}
+      onSubmit={handleSubmit((data) => activeMutation.mutate(data))}
       className="flex flex-col gap-4"
     >
       <Card>
@@ -141,7 +170,7 @@ export function CreateRideForm({ center }: { center: [number, number] }) {
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="style">Ride style</Label>
               <Select
-                defaultValue="WEEKEND"
+                defaultValue={ride?.style ?? "WEEKEND"}
                 onValueChange={(value) => setValue("style", value as CreateRideFormInput["style"])}
               >
                 <SelectTrigger id="style" className="w-full">
@@ -193,15 +222,15 @@ export function CreateRideForm({ center }: { center: [number, number] }) {
 
           <div className="flex flex-wrap gap-4 text-sm">
             <label className="flex items-center gap-2">
-              <input type="checkbox" defaultChecked {...register("requiresApproval")} />
+              <input type="checkbox" defaultChecked={ride?.requiresApproval ?? true} {...register("requiresApproval")} />
               Require host approval to join
             </label>
             <label className="flex items-center gap-2">
-              <input type="checkbox" {...register("allowPillion")} />
+              <input type="checkbox" defaultChecked={ride?.allowPillion ?? false} {...register("allowPillion")} />
               Allow pillion riders
             </label>
             <label className="flex items-center gap-2">
-              <input type="checkbox" defaultChecked {...register("helmetRequired")} />
+              <input type="checkbox" defaultChecked={ride?.helmetRequired ?? true} {...register("helmetRequired")} />
               Helmet required
             </label>
           </div>
@@ -219,6 +248,7 @@ export function CreateRideForm({ center }: { center: [number, number] }) {
                 id="startLocationName"
                 placeholder="Search for the meetup point..."
                 near={{ lat: center[0], lng: center[1] }}
+                defaultValue={ride?.startLocationName}
                 onSelect={handleStartSelect}
               />
               {errors.startLocationName ? (
@@ -231,6 +261,7 @@ export function CreateRideForm({ center }: { center: [number, number] }) {
                 id="destinationName"
                 placeholder="Search for the destination..."
                 near={{ lat: startLat ?? center[0], lng: startLng ?? center[1] }}
+                defaultValue={ride?.destinationName}
                 onSelect={handleDestinationSelect}
               />
               {errors.destinationName ? (
@@ -268,12 +299,18 @@ export function CreateRideForm({ center }: { center: [number, number] }) {
         </CardContent>
       </Card>
 
-      {createRide.isError ? (
-        <p className="text-sm text-destructive">{createRide.error.message}</p>
+      {activeMutation.isError ? (
+        <p className="text-sm text-destructive">{activeMutation.error.message}</p>
       ) : null}
 
-      <Button type="submit" disabled={createRide.isPending} className="self-start">
-        {createRide.isPending ? "Creating ride..." : "Create ride"}
+      <Button type="submit" disabled={activeMutation.isPending} className="self-start">
+        {ride
+          ? activeMutation.isPending
+            ? "Saving changes..."
+            : "Save changes"
+          : activeMutation.isPending
+            ? "Creating ride..."
+            : "Create ride"}
       </Button>
     </form>
   );

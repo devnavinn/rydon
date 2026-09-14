@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Calendar, Clock, Users, Play, Flag as FlagIcon, MessageCircle } from "lucide-react";
+import { Calendar, Clock, Users, Play, Flag as FlagIcon, MessageCircle, Pencil } from "lucide-react";
 
 import { useRideDetail } from "@/features/rides/queries";
 import { useJoinRide, useLeaveRide, useRideAction } from "@/features/rides/mutations";
 import { useRideSimulation } from "@/features/rides/hooks";
+import { canEditRide } from "@/features/rides/permissions";
 import type { RideDetail } from "@/features/rides/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -84,6 +85,7 @@ export function RideRoom({
     return () => clearInterval(id);
   }, []);
   const canStart = meetupTime.getTime() <= now;
+  const canEdit = isHost && canEditRide(active, new Date(now));
 
   return (
     <div className="flex flex-col gap-4">
@@ -119,6 +121,13 @@ export function RideRoom({
               <Button variant="outline" asChild>
                 <Link href={`/chat/${active.groupId}`}>
                   <MessageCircle className="size-3.5" /> Chat
+                </Link>
+              </Button>
+            ) : null}
+            {canEdit ? (
+              <Button variant="outline" asChild>
+                <Link href={`/rides/${rideId}/edit`}>
+                  <Pencil className="size-3.5" /> Edit
                 </Link>
               </Button>
             ) : null}

@@ -3,8 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getRideDetail } from "@/features/rides/server/queries";
-import { startRide, endRide, setMemberStatus } from "@/features/rides/server/mutations";
-import { rideStatusUpdateSchema } from "@/features/rides/validators";
+import { startRide, endRide, setMemberStatus, updateRide } from "@/features/rides/server/mutations";
+import { rideStatusUpdateSchema, createRideSchema } from "@/features/rides/validators";
 
 export async function GET(
   _request: NextRequest,
@@ -18,6 +18,34 @@ export async function GET(
   if (!ride) return NextResponse.json({ error: "Ride not found" }, { status: 404 });
 
   return NextResponse.json({ ride });
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ rideId: string }> }
+) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
+
+  const { rideId } = await params;
+  const body = await request.json();
+  const parsed = createRideSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Invalid input" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    await updateRide(rideId, user.id, parsed.data);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to update ride";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+
+  const updated = await getRideDetail(rideId);
+  return NextResponse.json({ ride: updated });
 }
 
 export async function PATCH(

@@ -28,7 +28,7 @@ export function RidersView({ fallback }: { fallback: GeoPosition | null }) {
           <MapPinOff className="size-6" />
           <p className="text-sm">
             {status === "denied"
-              ? "Location access denied. Add a city in your profile to see nearby riders."
+              ? "Location access denied. Go to Settings → Location to sync your location and see nearby riders."
               : "Locating you..."}
           </p>
         </div>

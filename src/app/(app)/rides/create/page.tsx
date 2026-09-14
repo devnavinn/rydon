@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/lib/auth";
-import { CreateRideForm } from "@/components/rides/create-ride-form";
+import { RideForm } from "@/components/rides/ride-form";
 
 const DEFAULT_CENTER: [number, number] = [12.9716, 77.5946]; // Bengaluru
 
@@ -18,7 +18,7 @@ export default async function CreateRidePage() {
           Set the meetup point, the destination, and invite the brotherhood.
         </p>
       </div>
-      <CreateRideForm center={center} />
+      <RideForm center={center} />
     </div>
   );
 }

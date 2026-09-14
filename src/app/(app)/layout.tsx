@@ -6,6 +6,7 @@ import { Nav, MobileTabBar } from "@/components/shared/nav";
 import { UserMenu } from "@/components/shared/user-menu";
 import { NotificationBell } from "@/components/shared/notification-bell";
 import { VerifyEmailBanner } from "@/components/shared/verify-email-banner";
+import { LocationAutoSync } from "@/components/shared/location-auto-sync";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -14,6 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-full flex-1 flex-col bg-background">
+      <LocationAutoSync />
       <header className="sticky top-0 z-40 flex items-center justify-between gap-4 overflow-x-hidden border-b border-white/5 bg-background/85 px-4 py-3 backdrop-blur-md">
         <div className="flex min-w-0 items-center gap-6">
           <Link href="/dashboard" className="flex shrink-0 items-center gap-2">

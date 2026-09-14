@@ -2,6 +2,7 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
+import { canEditRide } from "@/features/rides/permissions";
 import type { CreateRideInput } from "@/features/rides/validators";
 import {
   createNotification,
@@ -61,6 +62,46 @@ export async function createRide(hostId: string, input: CreateRideInput) {
   });
 
   return ride;
+}
+
+export async function updateRide(rideId: string, hostId: string, input: CreateRideInput) {
+  const ride = await prisma.ride.findUnique({
+    where: { id: rideId },
+    select: { hostId: true, status: true, rideDate: true },
+  });
+  if (!ride) throw new Error("Ride not found");
+  if (ride.hostId !== hostId) throw new Error("Only the host can edit this ride");
+  if (!canEditRide(ride)) {
+    throw new Error("This ride can no longer be edited");
+  }
+
+  const rideDate = new Date(input.rideDate);
+  const meetupTime = new Date(`${input.rideDate}T${input.meetupTime}`);
+
+  return prisma.ride.update({
+    where: { id: rideId },
+    data: {
+      title: input.title,
+      description: input.description || null,
+      notes: input.notes || null,
+      startLocationName: input.startLocationName,
+      startLatitude: input.startLatitude,
+      startLongitude: input.startLongitude,
+      destinationName: input.destinationName,
+      destinationLatitude: input.destinationLatitude,
+      destinationLongitude: input.destinationLongitude,
+      rideDate,
+      meetupTime,
+      style: input.style,
+      visibility: input.visibility,
+      maxRiders: input.maxRiders,
+      minRiders: input.minRiders,
+      requiresApproval: input.requiresApproval,
+      allowPillion: input.allowPillion,
+      helmetRequired: input.helmetRequired,
+    },
+    select: { id: true },
+  });
 }
 
 async function addToGroup(rideId: string, userId: string) {

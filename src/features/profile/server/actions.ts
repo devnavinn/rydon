@@ -7,6 +7,7 @@ import { requireUser } from "@/lib/auth";
 import {
   bikeSchema,
   emergencyContactSchema,
+  locationUpdateSchema,
   profileUpdateSchema,
   MAX_EMERGENCY_CONTACTS,
 } from "@/features/profile/validators";
@@ -48,6 +49,24 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
 
   revalidatePath("/settings");
   revalidatePath(`/riders/${user.username}`);
+  return { error: null, success: true };
+}
+
+export async function updateLocationAction(latitude: number, longitude: number): Promise<FormState> {
+  const user = await requireUser();
+
+  const parsed = locationUpdateSchema.safeParse({ latitude, longitude });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid location", success: false };
+  }
+
+  await prisma.riderProfile.update({
+    where: { userId: user.id },
+    data: { latitude: parsed.data.latitude, longitude: parsed.data.longitude },
+  });
+
+  revalidatePath("/settings");
+  revalidatePath("/riders");
   return { error: null, success: true };
 }
 

@@ -15,6 +15,13 @@ export const profileUpdateSchema = z.object({
 
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
 
+export const locationUpdateSchema = z.object({
+  latitude: z.coerce.number().min(-90).max(90),
+  longitude: z.coerce.number().min(-180).max(180),
+});
+
+export type LocationUpdateInput = z.infer<typeof locationUpdateSchema>;
+
 export const bikeSchema = z.object({
   brand: z.string().min(1, "Enter the brand").max(40),
   model: z.string().min(1, "Enter the model").max(40),

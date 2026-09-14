@@ -5,6 +5,30 @@ import { useRouter } from "next/navigation";
 
 import type { CreateRideInput } from "@/features/rides/validators";
 
+export function useUpdateRide(rideId: string) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: CreateRideInput) => {
+      const res = await fetch(`/api/rides/${rideId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Failed to update ride");
+      }
+      return res.json() as Promise<{ ride: { id: string } }>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ride", rideId] });
+      router.push(`/rides/${rideId}`);
+    },
+  });
+}
+
 export function useCreateRide() {
   const router = useRouter();
 
