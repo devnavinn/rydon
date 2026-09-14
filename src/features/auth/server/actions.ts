@@ -6,8 +6,17 @@ import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { signIn, signOut } from "@/auth";
 import { getCurrentUser } from "@/lib/auth";
-import { signInSchema, signUpSchema } from "@/features/auth/validators";
+import {
+  signInSchema,
+  signUpSchema,
+  requestPasswordResetSchema,
+  resetPasswordSchema,
+} from "@/features/auth/validators";
 import { sendVerificationEmail } from "@/features/auth/server/verification";
+import {
+  sendPasswordResetEmail,
+  resetPasswordWithToken,
+} from "@/features/auth/server/password-reset";
 
 export type ActionState = { error: string | null };
 
@@ -106,4 +115,54 @@ export async function resendVerificationEmailAction(
   }
 
   return { error: null, sent: true };
+}
+
+export type RequestPasswordResetState = { error: string | null; submitted: boolean };
+
+export async function requestPasswordResetAction(
+  _prev: RequestPasswordResetState,
+  formData: FormData
+): Promise<RequestPasswordResetState> {
+  const parsed = requestPasswordResetSchema.safeParse({ email: formData.get("email") });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input", submitted: false };
+  }
+
+  const user = await prisma.user.findFirst({
+    where: { email: parsed.data.email, passwordHash: { not: null } },
+    select: { id: true, username: true, email: true },
+  });
+
+  // Deliberately vague — always report success so we don't reveal whether
+  // an email is registered (or whether it's a password-based account).
+  if (user?.email) {
+    try {
+      await sendPasswordResetEmail(user.id, user.email, user.username);
+    } catch {
+      // Don't block the generic response on a flaky email provider.
+    }
+  }
+
+  return { error: null, submitted: true };
+}
+
+export type ResetPasswordState = { error: string | null; success: boolean };
+
+export async function resetPasswordAction(
+  _prev: ResetPasswordState,
+  formData: FormData
+): Promise<ResetPasswordState> {
+  const parsed = resetPasswordSchema.safeParse({
+    token: formData.get("token"),
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input", success: false };
+  }
+
+  const result = await resetPasswordWithToken(parsed.data.token, parsed.data.password);
+  if (!result.ok) return { error: result.reason, success: false };
+
+  return { error: null, success: true };
 }
