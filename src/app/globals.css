@@ -161,4 +161,17 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Live-position pulse ring for map markers — color set per-marker via --pulse-color. */
+  @keyframes rydo-pulse {
+    0% {
+      box-shadow: 0 0 0 0 var(--pulse-color, transparent);
+    }
+    70% {
+      box-shadow: 0 0 0 8px transparent;
+    }
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+  }
 }

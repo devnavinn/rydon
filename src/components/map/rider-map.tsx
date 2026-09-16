@@ -1,24 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
+import { useEffect, useRef, useState } from "react";
+import Map, { Marker, Popup, Source, Layer, type MapRef } from "react-map-gl/mapbox";
+import type { MapMouseEvent } from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 
-import { coloredIcon, type MarkerKind } from "@/components/map/leaflet-icons";
+import { useSmoothedPosition } from "@/hooks/use-smoothed-position";
+import { MarkerDot, type MarkerKind } from "@/components/map/marker-dot";
 
-const ALL_KINDS: MarkerKind[] = [
-  "self",
-  "online",
-  "riding",
-  "offline",
-  "ride",
-  "start",
-  "destination",
-];
+export type { MarkerKind };
 
-function iconKey(kind: MarkerKind, pulse?: boolean) {
-  return `${kind}:${pulse ? 1 : 0}`;
-}
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+const MAP_STYLE = "mapbox://styles/mapbox/dark-v11";
 
 export type MapMarker = {
   id: string;
@@ -35,13 +28,30 @@ export type MapRoute = {
   points: [number, number][];
 };
 
-function ClickCapture({ onClick }: { onClick: (lat: number, lng: number) => void }) {
-  useMapEvents({
-    click(e) {
-      onClick(e.latlng.lat, e.latlng.lng);
-    },
-  });
-  return null;
+function SmoothMarker({ marker }: { marker: MapMarker }) {
+  const { lat, lng } = useSmoothedPosition(marker.lat, marker.lng);
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Marker
+        latitude={lat}
+        longitude={lng}
+        onClick={(e) => {
+          e.originalEvent.stopPropagation();
+          setOpen(true);
+        }}
+      >
+        <MarkerDot kind={marker.kind} pulse={marker.pulse} />
+      </Marker>
+      {open ? (
+        <Popup latitude={lat} longitude={lng} closeButton onClose={() => setOpen(false)} offset={12}>
+          <p className="font-medium">{marker.label}</p>
+          {marker.sublabel ? <p className="text-muted-foreground">{marker.sublabel}</p> : null}
+        </Popup>
+      ) : null}
+    </>
+  );
 }
 
 export function RiderMap({
@@ -59,49 +69,58 @@ export function RiderMap({
   onMapClick?: (lat: number, lng: number) => void;
   className?: string;
 }) {
-  const icons = useMemo(() => {
-    const entries: [string, ReturnType<typeof coloredIcon>][] = [];
-    for (const kind of ALL_KINDS) {
-      for (const pulse of [false, true]) {
-        entries.push([iconKey(kind, pulse), coloredIcon(kind, pulse)]);
-      }
-    }
-    return new Map(entries);
-  }, []);
+  const mapRef = useRef<MapRef>(null);
+  const [centerLat, centerLng] = center;
+
+  useEffect(() => {
+    mapRef.current?.getMap().easeTo({ center: [centerLng, centerLat], duration: 800 });
+  }, [centerLat, centerLng]);
+
+  if (!MAPBOX_TOKEN) {
+    return (
+      <div className={className ?? "h-full w-full"}>
+        <div className="flex h-full w-full items-center justify-center bg-muted p-4 text-center text-sm text-muted-foreground">
+          Map unavailable — missing Mapbox access token.
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <MapContainer
-      center={center}
-      zoom={zoom}
-      scrollWheelZoom
-      className={className ?? "h-full w-full"}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      {onMapClick ? <ClickCapture onClick={onMapClick} /> : null}
-      {routes?.map((route) => (
-        <Polyline
-          key={route.id}
-          positions={route.points}
-          pathOptions={{ color: "#94a3b8", weight: 3, dashArray: "6 6" }}
-        />
-      ))}
-      {markers.map((marker) => (
-        <Marker
-          key={marker.id}
-          position={[marker.lat, marker.lng]}
-          icon={icons.get(iconKey(marker.kind, marker.pulse))}
-        >
-          <Popup>
-            <p className="font-medium">{marker.label}</p>
-            {marker.sublabel ? (
-              <p className="text-muted-foreground">{marker.sublabel}</p>
-            ) : null}
-          </Popup>
-        </Marker>
-      ))}
-    </MapContainer>
+    <div className={className ?? "h-full w-full"}>
+      <Map
+        ref={mapRef}
+        mapboxAccessToken={MAPBOX_TOKEN}
+        initialViewState={{ latitude: centerLat, longitude: centerLng, zoom }}
+        mapStyle={MAP_STYLE}
+        style={{ width: "100%", height: "100%" }}
+        onClick={(e: MapMouseEvent) => onMapClick?.(e.lngLat.lat, e.lngLat.lng)}
+      >
+        {routes?.map((route) => (
+          <Source
+            key={route.id}
+            id={`route-${route.id}`}
+            type="geojson"
+            data={{
+              type: "Feature",
+              properties: {},
+              geometry: {
+                type: "LineString",
+                coordinates: route.points.map(([lat, lng]) => [lng, lat]),
+              },
+            }}
+          >
+            <Layer
+              id={`route-line-${route.id}`}
+              type="line"
+              paint={{ "line-color": "#94a3b8", "line-width": 3, "line-dasharray": [2, 2] }}
+            />
+          </Source>
+        ))}
+        {markers.map((marker) => (
+          <SmoothMarker key={marker.id} marker={marker} />
+        ))}
+      </Map>
+    </div>
   );
 }
