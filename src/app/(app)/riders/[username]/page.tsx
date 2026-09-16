@@ -4,7 +4,9 @@ import { BadgeCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { hasBlocked } from "@/features/blocking/server/queries";
+import { nextLevelProgress } from "@/lib/rider-level";
 import { BlockButton } from "@/components/riders/block-button";
+import { BadgeShelf } from "@/components/riders/badge-shelf";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,6 +39,7 @@ export default async function RiderProfilePage({
             totalRides: true,
             totalDistanceKm: true,
             yearsRiding: true,
+            badgesEarned: { select: { code: true }, orderBy: { earnedAt: "desc" } },
           },
         },
         bikes: { select: { brand: true, model: true, year: true, isPrimary: true } },
@@ -49,6 +52,16 @@ export default async function RiderProfilePage({
   const isOwnProfile = currentUser?.id === user.id;
   const isBlockedByMe =
     !isOwnProfile && currentUser ? await hasBlocked(currentUser.id, user.id) : false;
+
+  const progress = nextLevelProgress(user.riderProfile.totalRides, user.riderProfile.totalDistanceKm);
+  const nextLevelLabel = progress?.next.replace("_", " ");
+  const progressMessage = !progress
+    ? null
+    : progress.ridesLeft === 0 || progress.kmLeft === 0
+      ? `Ready to level up to ${nextLevelLabel}`
+      : progress.ridesLeft <= progress.kmLeft
+        ? `${progress.ridesLeft} more ${progress.ridesLeft === 1 ? "ride" : "rides"} to reach ${nextLevelLabel}`
+        : `${progress.kmLeft} more km to reach ${nextLevelLabel}`;
 
   const initials = user.riderProfile.fullName
     .split(" ")
@@ -99,19 +112,33 @@ export default async function RiderProfilePage({
       ) : null}
 
       <Card>
-        <CardContent className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p className="text-lg font-semibold">{user.riderProfile.totalRides}</p>
-            <p className="text-xs text-muted-foreground">Rides</p>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="font-heading text-2xl text-primary">{user.riderProfile.totalRides}</p>
+              <p className="text-xs text-muted-foreground">Rides</p>
+            </div>
+            <div>
+              <p className="font-heading text-2xl text-primary">{user.riderProfile.totalDistanceKm}</p>
+              <p className="text-xs text-muted-foreground">Km ridden</p>
+            </div>
+            <div>
+              <p className="font-heading text-2xl text-primary">{user.riderProfile.yearsRiding ?? "—"}</p>
+              <p className="text-xs text-muted-foreground">Years riding</p>
+            </div>
           </div>
-          <div>
-            <p className="text-lg font-semibold">{user.riderProfile.totalDistanceKm}</p>
-            <p className="text-xs text-muted-foreground">Km ridden</p>
-          </div>
-          <div>
-            <p className="text-lg font-semibold">{user.riderProfile.yearsRiding ?? "—"}</p>
-            <p className="text-xs text-muted-foreground">Years riding</p>
-          </div>
+          {progressMessage ? (
+            <p className="mt-3 border-t border-white/8 pt-3 text-center text-xs text-muted-foreground">
+              {progressMessage}
+            </p>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
+          <p className="mb-3 text-sm font-medium">Badges</p>
+          <BadgeShelf badges={user.riderProfile.badgesEarned} />
         </CardContent>
       </Card>
 

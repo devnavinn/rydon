@@ -63,6 +63,32 @@ export function seededSpeedKph(id: string, min = 25, max = 45): number {
   return min + normalized * (max - min);
 }
 
+export type TrackPoint = LatLng & { recordedAt: Date };
+
+/** Below this, a GPS fix jump is noise rather than real movement — see the
+ * riders-page flicker fix; the same jitter shows up in ride tracks. */
+const JITTER_MIN_SEGMENT_KM = 0.02;
+/** Above this implied speed, the fix is a glitch (or wrapped point) rather than a real segment. */
+const MAX_PLAUSIBLE_SPEED_KPH = 200;
+
+/** Sums haversine distance between consecutive points, dropping GPS-jitter and
+ * physically-impossible segments so a stationary rider doesn't accrue distance. */
+export function computeTrackDistanceKm(points: TrackPoint[]): number {
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    const prev = points[i - 1];
+    const curr = points[i];
+    const segmentKm = haversineDistanceKm(prev, curr);
+    if (segmentKm < JITTER_MIN_SEGMENT_KM) continue;
+
+    const hours = (curr.recordedAt.getTime() - prev.recordedAt.getTime()) / 3_600_000;
+    if (hours > 0 && segmentKm / hours > MAX_PLAUSIBLE_SPEED_KPH) continue;
+
+    total += segmentKm;
+  }
+  return total;
+}
+
 export function bearing(a: LatLng, b: LatLng): number {
   const lat1 = toRadians(a.lat);
   const lat2 = toRadians(b.lat);

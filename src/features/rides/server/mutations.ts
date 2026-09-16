@@ -9,6 +9,7 @@ import {
   createNotifications,
 } from "@/features/notifications/server/mutations";
 import { isBlockedEitherWay } from "@/features/blocking/server/queries";
+import { computeRideStatsForMembers } from "@/features/rides/server/stats";
 
 export async function createRide(hostId: string, input: CreateRideInput) {
   const base = slugify(input.title);
@@ -260,17 +261,29 @@ export async function startRide(rideId: string) {
 }
 
 export async function endRide(rideId: string) {
-  const ride = await prisma.ride.findUnique({ where: { id: rideId }, select: { status: true } });
+  const ride = await prisma.ride.findUnique({
+    where: { id: rideId },
+    select: { status: true, group: { select: { activeFrom: true } } },
+  });
   if (!ride) throw new Error("Ride not found");
   if (ride.status !== "ONGOING") {
     throw new Error("Only a ride that has started can be ended");
   }
 
-  return prisma.$transaction([
+  const endedAt = new Date();
+  const result = await prisma.$transaction([
     prisma.ride.update({ where: { id: rideId }, data: { status: "COMPLETED" } }),
     prisma.rideGroup.update({
       where: { rideId },
-      data: { status: "ENDED", activeUntil: new Date() },
+      data: { status: "ENDED", activeUntil: endedAt },
     }),
   ]);
+
+  if (ride.group?.activeFrom) {
+    await computeRideStatsForMembers(rideId, ride.group.activeFrom, endedAt).catch((err) => {
+      console.error("Failed to compute ride stats for", rideId, err);
+    });
+  }
+
+  return result;
 }
