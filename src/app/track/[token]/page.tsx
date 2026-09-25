@@ -28,5 +28,5 @@ export default async function TrackPage({
 }
 
 export function generateMetadata() {
-  return { title: "Live location — Rydo", robots: { index: false, follow: false } };
+  return { title: "Live location", robots: { index: false, follow: false } };
 }

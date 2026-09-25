@@ -34,22 +34,48 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const ride = await loadRide(slug);
 
   if (!ride || ride.visibility !== "PUBLIC") {
-    return { title: "Ride — Rydo", robots: { index: false, follow: false } };
+    return { title: "Ride", robots: { index: false, follow: false } };
   }
 
-  const appUrl = await getAppUrl();
-  const title = `${ride.title} — Rydo`;
   const description = summary(ride);
   const url = publicRidePath(ride.slug);
 
   return {
-    metadataBase: new URL(appUrl),
-    title,
+    title: ride.title,
     description,
     alternates: { canonical: url },
     robots: isEnded(ride) ? { index: false, follow: true } : undefined,
     openGraph: { type: "website", siteName: "Rydo", title: ride.title, description, url },
     twitter: { card: "summary_large_image", title: ride.title, description },
+  };
+}
+
+/** schema.org Event, so search engines can show the ride as an event. */
+function rideJsonLd(ride: PublicRide, url: string) {
+  const place = (name: string, lat: number, lng: number) => ({
+    "@type": "Place",
+    name,
+    address: name,
+    geo: { "@type": "GeoCoordinates", latitude: lat, longitude: lng },
+  });
+  return {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: ride.title,
+    description: ride.description ?? summary(ride),
+    url,
+    startDate: ride.meetupTime.toISOString(),
+    ...(ride.estimatedDurationMin
+      ? { endDate: new Date(ride.meetupTime.getTime() + ride.estimatedDurationMin * 60_000).toISOString() }
+      : {}),
+    eventStatus:
+      ride.status === "CANCELLED" ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    location: place(ride.startLocationName, ride.startLatitude, ride.startLongitude),
+    organizer: { "@type": "Person", name: ride.host.fullName },
+    maximumAttendeeCapacity: ride.maxRiders,
+    remainingAttendeeCapacity: Math.max(ride.maxRiders - ride.memberCount, 0),
+    isAccessibleForFree: true,
   };
 }
 
@@ -160,8 +186,13 @@ export default async function PublicRidePage({ params }: Props) {
     );
   }
 
+  const url = `${await getAppUrl()}${publicRidePath(ride.slug)}`;
+  // `<` is escaped so ride text can't close the script tag.
+  const jsonLd = JSON.stringify(rideJsonLd(ride, url)).replace(/</g, "\\u003c");
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6 sm:py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">{formatRideStyle(ride.style)}</Badge>

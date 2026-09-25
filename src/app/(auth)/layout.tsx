@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+// Onboarding / password-reset flows aren't search landing pages; sign-in and
+// sign-up opt back in on their own pages.
+export const metadata: Metadata = { robots: { index: false, follow: true } };
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (

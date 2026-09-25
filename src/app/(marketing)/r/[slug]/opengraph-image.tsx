@@ -2,50 +2,14 @@ import { ImageResponse } from "next/og";
 
 import { getPublicRide } from "@/features/rides/server/queries";
 import { formatRideDay, formatRideStyle, formatRideTime } from "@/features/rides/format";
+import { BACKGROUND, Logo, MUTED, PRIMARY } from "@/components/og/og-brand";
 
 export const alt = "Group ride on Rydo";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Hex approximations of the app's oklch theme tokens (Satori can't parse oklch).
-const BACKGROUND = "#17120e";
-const PRIMARY = "#f0913a";
-const MUTED = "#a89f97";
-
 function clip(text: string, max: number) {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
-}
-
-function Logo() {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: 56,
-          height: 56,
-          borderRadius: 12,
-          background: PRIMARY,
-        }}
-      >
-        <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
-          <path d="M4 17.5a3.5 3.5 0 1 0 7 0 3.5 3.5 0 0 0-7 0Z" stroke={BACKGROUND} strokeWidth="2" />
-          <path d="M13 17.5a3.5 3.5 0 1 0 7 0 3.5 3.5 0 0 0-7 0Z" stroke={BACKGROUND} strokeWidth="2" />
-          <path
-            d="M7.5 17.5 10 9h3l1.2 2.4M10 9 8.5 6h-2"
-            stroke={BACKGROUND}
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path d="M13 9h3.5l1 2.4" stroke={BACKGROUND} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </div>
-      <div style={{ fontSize: 40, fontWeight: 700, letterSpacing: 4, color: "white" }}>RYDO</div>
-    </div>
-  );
 }
 
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {

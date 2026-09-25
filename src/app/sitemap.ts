@@ -11,6 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: appUrl, changeFrequency: "daily", priority: 1 },
     { url: `${appUrl}/about`, changeFrequency: "monthly" },
     { url: `${appUrl}/safety`, changeFrequency: "monthly" },
+    { url: `${appUrl}/sign-up`, changeFrequency: "monthly" },
     ...rides.map((ride) => ({
       url: `${appUrl}${publicRidePath(ride.slug)}`,
       lastModified: ride.updatedAt,

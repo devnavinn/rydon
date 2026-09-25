@@ -1,3 +1,11 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Rider safety",
+  description: "How Rydo keeps group rides safe — live tracking links, emergency contacts, blocking, and reporting.",
+  alternates: { canonical: "/safety" },
+};
+
 const TIPS = [
   "Always wear a certified helmet and protective riding gear.",
   "Share your ride and live location with an emergency contact before you leave.",

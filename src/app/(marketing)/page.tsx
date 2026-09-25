@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Users, Map, Route, Radar, UsersRound, Flag, ShieldCheck } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth";
+import { getAppUrl } from "@/lib/app-url";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 const FEATURES = [
   {
@@ -68,8 +72,22 @@ export default async function MarketingHome() {
     { label: "Cities", value: `${Math.max(cityGroups.length, 1)}+` },
   ];
 
+  const appUrl = await getAppUrl();
+  // Lets search engines show the site name (not just the domain) on results.
+  const jsonLd = JSON.stringify([
+    { "@context": "https://schema.org", "@type": "WebSite", name: "Rydo", url: appUrl },
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "Rydo",
+      url: appUrl,
+      logo: `${appUrl}/icon.png`,
+    },
+  ]);
+
   return (
     <div className="flex flex-1 flex-col">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
       {/* Hero */}
       <section className="bg-garage-glow bg-grain relative overflow-hidden border-b border-white/5">
         <div className="pointer-events-none absolute inset-0 bg-garage-stripes opacity-60" />

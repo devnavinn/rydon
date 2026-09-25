@@ -48,5 +48,5 @@ export default async function ResetPasswordPage({
 }
 
 export function generateMetadata() {
-  return { title: "Reset password — Rydo" };
+  return { title: "Reset password" };
 }

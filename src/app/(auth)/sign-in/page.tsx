@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import { googleAuthEnabled } from "@/lib/env";
 import { SignInForm } from "@/components/auth/sign-in-form";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+
+export const metadata: Metadata = {
+  title: "Sign in",
+  alternates: { canonical: "/sign-in" },
+  robots: { index: true, follow: true },
+};
 
 // Auth.js redirects failed OAuth sign-ins back here with `?error=<code>`.
 const OAUTH_ERRORS: Record<string, string> = {

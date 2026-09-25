@@ -36,5 +36,5 @@ export default async function VerifyEmailPage({
 }
 
 export function generateMetadata() {
-  return { title: "Verify email — Rydo" };
+  return { title: "Verify email", robots: { index: false, follow: false } };
 }

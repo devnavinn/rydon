@@ -8,7 +8,20 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     rules: {
       userAgent: "*",
       allow: ["/", "/r/"],
-      disallow: ["/api/", "/track/", "/dashboard", "/settings", "/chat/", "/notifications"],
+      // Opengraph images live under /r/ and must stay crawlable; everything
+      // signed-in is also marked noindex, this just saves crawl budget.
+      disallow: [
+        "/api/",
+        "/track/",
+        "/dashboard",
+        "/settings",
+        "/chat/",
+        "/notifications",
+        "/onboarding",
+        "/saved-rides",
+        "/profile",
+        "/map",
+      ],
     },
     sitemap: `${appUrl}/sitemap.xml`,
   };
