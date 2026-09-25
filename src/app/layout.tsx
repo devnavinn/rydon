@@ -36,7 +36,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${bebasNeue.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Providers>{children}</Providers>
+        <Providers mappls={{ token: process.env.MAPPLS_TOKEN, style: process.env.MAPPLS_STYLE }}>{children}</Providers>
       </body>
     </html>
   );

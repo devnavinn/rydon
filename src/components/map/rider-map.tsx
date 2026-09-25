@@ -1,17 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Map, { Marker, Popup, Source, Layer, type MapRef } from "react-map-gl/mapbox";
-import type { MapMouseEvent } from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { useSmoothedPosition } from "@/hooks/use-smoothed-position";
-import { MarkerDot, type MarkerKind } from "@/components/map/marker-dot";
+import { markerDotHtml, type MarkerKind } from "@/components/map/marker-dot";
+import { useMapplsConfig } from "@/components/map/mappls-config";
+import { escapeHtml, loadMapplsSdk, type MapplsMap, type MapplsSdk } from "@/lib/mappls";
 
 export type { MarkerKind };
-
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-const MAP_STYLE = "mapbox://styles/mapbox/dark-v11";
 
 export type MapMarker = {
   id: string;
@@ -28,30 +24,58 @@ export type MapRoute = {
   points: [number, number][];
 };
 
-function SmoothMarker({ marker }: { marker: MapMarker }) {
-  const { lat, lng } = useSmoothedPosition(marker.lat, marker.lng);
-  const [open, setOpen] = useState(false);
+type MapContext = { sdk: MapplsSdk; map: MapplsMap };
 
-  return (
-    <>
-      <Marker
-        latitude={lat}
-        longitude={lng}
-        onClick={(e) => {
-          e.originalEvent.stopPropagation();
-          setOpen(true);
-        }}
-      >
-        <MarkerDot kind={marker.kind} pulse={marker.pulse} />
-      </Marker>
-      {open ? (
-        <Popup latitude={lat} longitude={lng} closeButton onClose={() => setOpen(false)} offset={12}>
-          <p className="font-medium">{marker.label}</p>
-          {marker.sublabel ? <p className="text-muted-foreground">{marker.sublabel}</p> : null}
-        </Popup>
-      ) : null}
-    </>
-  );
+function SmoothMarker({ ctx, marker }: { ctx: MapContext; marker: MapMarker }) {
+  const { lat, lng } = useSmoothedPosition(marker.lat, marker.lng);
+  const markerRef = useRef<ReturnType<MapplsSdk["Marker"]> | null>(null);
+  const positionRef = useRef({ lat, lng });
+
+  const { kind, pulse, label, sublabel } = marker;
+
+  // Mappls markers can't swap their HTML in place, so appearance changes recreate the marker.
+  useEffect(() => {
+    const popupHtml =
+      `<p class="font-medium">${escapeHtml(label)}</p>` +
+      (sublabel ? `<p class="text-muted-foreground">${escapeHtml(sublabel)}</p>` : "");
+    const instance = ctx.sdk.Marker({
+      map: ctx.map,
+      position: positionRef.current,
+      html: markerDotHtml(kind, pulse),
+      popupHtml,
+    });
+    markerRef.current = instance;
+    return () => {
+      ctx.sdk.remove({ map: ctx.map, layer: instance });
+      markerRef.current = null;
+    };
+  }, [ctx, kind, pulse, label, sublabel]);
+
+  useEffect(() => {
+    positionRef.current = { lat, lng };
+    markerRef.current?.setPosition({ lat, lng });
+  }, [lat, lng]);
+
+  return null;
+}
+
+function RouteLine({ ctx, points }: { ctx: MapContext; points: [number, number][] }) {
+  const pointsKey = JSON.stringify(points);
+
+  useEffect(() => {
+    const path = (JSON.parse(pointsKey) as [number, number][]).map(([lat, lng]) => ({ lat, lng }));
+    if (path.length < 2) return;
+    const instance = ctx.sdk.Polyline({
+      map: ctx.map,
+      path,
+      strokeColor: "#94a3b8",
+      strokeWeight: 3,
+      dasharray: [2, 2],
+    });
+    return () => ctx.sdk.remove({ map: ctx.map, layer: instance });
+  }, [ctx, pointsKey]);
+
+  return null;
 }
 
 export function RiderMap({
@@ -69,18 +93,56 @@ export function RiderMap({
   onMapClick?: (lat: number, lng: number) => void;
   className?: string;
 }) {
-  const mapRef = useRef<MapRef>(null);
+  const { token, style } = useMapplsConfig();
+  const containerId = `rydo-map-${useId().replace(/:/g, "")}`;
+  const [ctx, setCtx] = useState<MapContext | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const [centerLat, centerLng] = center;
 
+  const initialViewRef = useRef({ center: [centerLat, centerLng], zoom });
+  const onMapClickRef = useRef(onMapClick);
   useEffect(() => {
-    mapRef.current?.getMap().easeTo({ center: [centerLng, centerLat], duration: 800 });
-  }, [centerLat, centerLng]);
+    onMapClickRef.current = onMapClick;
+  }, [onMapClick]);
 
-  if (!MAPBOX_TOKEN) {
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    let map: MapplsMap | null = null;
+
+    loadMapplsSdk(token, style)
+      .then((sdk) => {
+        if (cancelled) return;
+        map = sdk.Map(containerId, { ...initialViewRef.current, zoomControl: true });
+        map.addListener("load", () => {
+          if (!cancelled && map) setCtx({ sdk, map });
+        });
+        map.addListener("click", (e) => {
+          // Clicks on a marker bubble to the map; treat those as marker clicks only.
+          if ((e.originalEvent?.target as Element | undefined)?.closest?.("[data-rydo-marker]")) return;
+          if (e.lngLat) onMapClickRef.current?.(e.lngLat.lat, e.lngLat.lng);
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setLoadError(true);
+      });
+
+    return () => {
+      cancelled = true;
+      setCtx(null);
+      map?.remove();
+    };
+  }, [containerId, token, style]);
+
+  useEffect(() => {
+    ctx?.map.panTo([centerLng, centerLat], { duration: 800 });
+  }, [ctx, centerLat, centerLng]);
+
+  if (!token || loadError) {
     return (
       <div className={className ?? "h-full w-full"}>
         <div className="flex h-full w-full items-center justify-center bg-muted p-4 text-center text-sm text-muted-foreground">
-          Map unavailable — missing Mapbox access token.
+          {token ? "Map unavailable — failed to load Mappls." : "Map unavailable — missing Mappls access token."}
         </div>
       </div>
     );
@@ -88,39 +150,15 @@ export function RiderMap({
 
   return (
     <div className={className ?? "h-full w-full"}>
-      <Map
-        ref={mapRef}
-        mapboxAccessToken={MAPBOX_TOKEN}
-        initialViewState={{ latitude: centerLat, longitude: centerLng, zoom }}
-        mapStyle={MAP_STYLE}
-        style={{ width: "100%", height: "100%" }}
-        onClick={(e: MapMouseEvent) => onMapClick?.(e.lngLat.lat, e.lngLat.lng)}
-      >
-        {routes?.map((route) => (
-          <Source
-            key={route.id}
-            id={`route-${route.id}`}
-            type="geojson"
-            data={{
-              type: "Feature",
-              properties: {},
-              geometry: {
-                type: "LineString",
-                coordinates: route.points.map(([lat, lng]) => [lng, lat]),
-              },
-            }}
-          >
-            <Layer
-              id={`route-line-${route.id}`}
-              type="line"
-              paint={{ "line-color": "#94a3b8", "line-width": 3, "line-dasharray": [2, 2] }}
-            />
-          </Source>
-        ))}
-        {markers.map((marker) => (
-          <SmoothMarker key={marker.id} marker={marker} />
-        ))}
-      </Map>
+      <div id={containerId} style={{ width: "100%", height: "100%" }} />
+      {ctx ? (
+        <>
+          {routes?.map((route) => <RouteLine key={route.id} ctx={ctx} points={route.points} />)}
+          {markers.map((marker) => (
+            <SmoothMarker key={marker.id} ctx={ctx} marker={marker} />
+          ))}
+        </>
+      ) : null}
     </div>
   );
 }
