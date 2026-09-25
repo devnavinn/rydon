@@ -26,6 +26,15 @@ export type MapRoute = {
 
 type MapContext = { sdk: MapplsSdk; map: MapplsMap };
 
+// React runs the map's unmount cleanup before its children's, and the SDK throws when
+// removing a layer from a destroyed map — so children skip removal once the map is gone.
+const removedMaps = new WeakSet<MapplsMap>();
+
+function removeLayer(ctx: MapContext, layer: Parameters<MapplsSdk["remove"]>[0]["layer"]) {
+  if (removedMaps.has(ctx.map)) return;
+  ctx.sdk.remove({ map: ctx.map, layer });
+}
+
 function SmoothMarker({ ctx, marker }: { ctx: MapContext; marker: MapMarker }) {
   const { lat, lng } = useSmoothedPosition(marker.lat, marker.lng);
   const markerRef = useRef<ReturnType<MapplsSdk["Marker"]> | null>(null);
@@ -46,7 +55,7 @@ function SmoothMarker({ ctx, marker }: { ctx: MapContext; marker: MapMarker }) {
     });
     markerRef.current = instance;
     return () => {
-      ctx.sdk.remove({ map: ctx.map, layer: instance });
+      removeLayer(ctx, instance);
       markerRef.current = null;
     };
   }, [ctx, kind, pulse, label, sublabel]);
@@ -72,7 +81,7 @@ function RouteLine({ ctx, points }: { ctx: MapContext; points: [number, number][
       strokeWeight: 3,
       dasharray: [2, 2],
     });
-    return () => ctx.sdk.remove({ map: ctx.map, layer: instance });
+    return () => removeLayer(ctx, instance);
   }, [ctx, pointsKey]);
 
   return null;
@@ -130,7 +139,10 @@ export function RiderMap({
     return () => {
       cancelled = true;
       setCtx(null);
-      map?.remove();
+      if (map) {
+        removedMaps.add(map);
+        map.remove();
+      }
     };
   }, [containerId, token, style]);
 
