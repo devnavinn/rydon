@@ -70,6 +70,8 @@ export default async function MarketingLayout({ children }: { children: React.Re
           <span className="font-heading text-lg tracking-wide text-foreground/80">RYDO</span>
           <p>&copy; {new Date().getFullYear()} Rydo. Ride together, ride safe.</p>
           <div className="flex gap-5">
+            <Link href="/cities" className="hover:text-foreground">Cities</Link>
+            <Link href="/routes" className="hover:text-foreground">Routes</Link>
             <Link href="/about" className="hover:text-foreground">About</Link>
             <Link href="/safety" className="hover:text-foreground">Safety</Link>
           </div>

@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth";
 import { getAppUrl } from "@/lib/app-url";
+import { CITIES, ROUTES, CITY_BY_SLUG, cityPath, routePath } from "@/features/places/data";
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
@@ -205,6 +206,51 @@ export default async function MarketingHome() {
           <p className="text-sm text-muted-foreground">
             Real profiles, real bikes — every rider shows their ride.
           </p>
+        </div>
+      </section>
+
+      {/* Cities & routes */}
+      <section className="border-t border-white/5 py-20">
+        <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-end justify-between gap-4">
+              <h2 className="font-heading text-3xl tracking-wide">Ride in your city</h2>
+              <Link href="/cities" className="text-sm text-muted-foreground hover:text-primary">
+                All cities
+              </Link>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {CITIES.map((city) => (
+                <Link
+                  key={city.slug}
+                  href={cityPath(city.slug)}
+                  className="rounded-full border border-white/10 px-3.5 py-1.5 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                >
+                  {city.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-end justify-between gap-4">
+              <h2 className="font-heading text-3xl tracking-wide">Classic routes</h2>
+              <Link href="/routes" className="text-sm text-muted-foreground hover:text-primary">
+                All routes
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
+              {ROUTES.slice(0, 9).map((route) => (
+                <Link
+                  key={route.slug}
+                  href={routePath(route.slug)}
+                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
+                >
+                  {CITY_BY_SLUG.get(route.fromCity)?.name} → {route.destination.name}{" "}
+                  <span className="text-xs">~{route.approxKm} km</span>
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 

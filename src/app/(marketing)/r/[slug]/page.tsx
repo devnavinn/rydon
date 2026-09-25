@@ -10,6 +10,7 @@ import { haversineDistanceKm } from "@/lib/geo";
 import { getPublicRide } from "@/features/rides/server/queries";
 import { formatRideDay, formatRideStyle, formatRideTime, publicRidePath } from "@/features/rides/format";
 import type { PublicRide } from "@/features/rides/types";
+import { cityForPoint, cityPath } from "@/features/places/data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -108,6 +109,7 @@ export default async function PublicRidePage({ params }: Props) {
   const start = { lat: ride.startLatitude, lng: ride.startLongitude };
   const destination = { lat: ride.destinationLatitude, lng: ride.destinationLongitude };
   const straightKm = haversineDistanceKm(start, destination);
+  const city = cityForPoint(start);
   const spotsLeft = Math.max(ride.maxRiders - ride.memberCount, 0);
   const ended = isEnded(ride);
   const next = encodeURIComponent(roomPath);
@@ -240,6 +242,12 @@ export default async function PublicRidePage({ params }: Props) {
               <h2 className="font-heading text-xl tracking-wide">About this ride</h2>
               <p className="text-sm whitespace-pre-line text-muted-foreground">{ride.description}</p>
             </section>
+          ) : null}
+
+          {city ? (
+            <Link href={cityPath(city.slug)} className="text-sm text-muted-foreground hover:text-primary">
+              More group rides in {city.name} →
+            </Link>
           ) : null}
 
           {rules.length > 0 ? (
