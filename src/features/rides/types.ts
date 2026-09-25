@@ -57,3 +57,30 @@ export type RideDetail = {
   groupActiveFrom: string | null;
   members: RideMemberSummary[];
 };
+
+/** What a logged-out visitor may see of a ride — no member list or host notes. */
+export type PublicRide = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  style: RideStyle;
+  status: RideStatus;
+  visibility: RideVisibility;
+  rideDate: Date;
+  meetupTime: Date;
+  estimatedDistanceKm: number | null;
+  estimatedDurationMin: number | null;
+  maxRiders: number;
+  memberCount: number;
+  requiresApproval: boolean;
+  allowPillion: boolean;
+  helmetRequired: boolean;
+  startLocationName: string;
+  startLatitude: number;
+  startLongitude: number;
+  destinationName: string;
+  destinationLatitude: number;
+  destinationLongitude: number;
+  host: { username: string; fullName: string; avatarUrl: string | null };
+};

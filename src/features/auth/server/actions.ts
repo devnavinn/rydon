@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { signIn, signOut } from "@/auth";
 import { getCurrentUser } from "@/lib/auth";
+import { safeNextPath } from "@/lib/safe-next";
 import {
   signInSchema,
   signUpSchema,
@@ -61,7 +62,9 @@ export async function signUpAction(_prev: ActionState, formData: FormData): Prom
   }
 
   try {
-    await signIn("credentials", { identifier: username, password, redirectTo: "/onboarding" });
+    const next = safeNextPath(formData.get("next"));
+    const redirectTo = next ? `/onboarding?next=${encodeURIComponent(next)}` : "/onboarding";
+    await signIn("credentials", { identifier: username, password, redirectTo });
   } catch (error) {
     if (error instanceof AuthError) {
       return { error: "Account created, but sign-in failed — try signing in." };
@@ -83,7 +86,8 @@ export async function signInAction(_prev: ActionState, formData: FormData): Prom
   }
 
   try {
-    await signIn("credentials", { ...parsed.data, redirectTo: "/dashboard" });
+    const redirectTo = safeNextPath(formData.get("next")) ?? "/dashboard";
+    await signIn("credentials", { ...parsed.data, redirectTo });
   } catch (error) {
     if (error instanceof AuthError) {
       return { error: "Incorrect username/email or password" };
@@ -92,6 +96,13 @@ export async function signInAction(_prev: ActionState, formData: FormData): Prom
   }
 
   return { error: null };
+}
+
+/** Always lands on onboarding — it forwards riders who've finished it on to `next`. */
+export async function signInWithGoogleAction(formData: FormData) {
+  const next = safeNextPath(formData.get("next"));
+  const redirectTo = next ? `/onboarding?next=${encodeURIComponent(next)}` : "/onboarding";
+  await signIn("google", { redirectTo });
 }
 
 export async function signOutAction() {

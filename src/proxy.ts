@@ -39,10 +39,20 @@ export default async function proxy(request: NextRequest) {
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 
+  // Shared ride links (`/rides/<id>`) open the public ride page for
+  // logged-out visitors instead of a sign-in wall.
+  const rideMatch = pathname.match(/^\/rides\/([^/]+)$/);
+  if (rideMatch && rideMatch[1] !== "create" && !hasSession) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/r/${rideMatch[1]}`;
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
   if (isAppRoute && !hasSession) {
     const url = request.nextUrl.clone();
     url.pathname = "/sign-in";
-    url.searchParams.set("next", pathname);
+    url.searchParams.set("next", pathname + request.nextUrl.search);
     return NextResponse.redirect(url);
   }
 

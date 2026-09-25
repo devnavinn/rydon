@@ -19,6 +19,7 @@ import { InviteList } from "@/components/rides/invite-list";
 import { ProgressPanel } from "@/components/rides/progress-panel";
 import { SaveRideButton } from "@/components/rides/save-ride-button";
 import { ShareLocationCard } from "@/components/rides/share-location-card";
+import { ShareRideButton } from "@/components/rides/share-ride-button";
 
 export function RideRoom({
   rideId,
@@ -124,6 +125,9 @@ export function RideRoom({
 
         <div className="flex flex-col items-end gap-1.5">
           <div className="flex gap-2">
+            {active.visibility === "PUBLIC" && active.status !== "DRAFT" && active.status !== "CANCELLED" ? (
+              <ShareRideButton slug={active.slug} title={active.title} />
+            ) : null}
             {active.groupId && (isHost || (membership && membership.status !== "LEFT")) ? (
               <Button variant="outline" asChild>
                 <Link href={`/chat/${active.groupId}`}>

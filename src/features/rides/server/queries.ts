@@ -3,7 +3,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { boundingBox, haversineDistanceKm } from "@/lib/geo";
 import type { NearbyRidesQuery } from "@/features/rides/validators";
-import type { NearbyRide, RideDetail } from "@/features/rides/types";
+import type { NearbyRide, PublicRide, RideDetail } from "@/features/rides/types";
 
 export async function isRideMember(rideId: string, userId: string): Promise<boolean> {
   const member = await prisma.rideMember.findUnique({
@@ -164,4 +164,74 @@ export async function getRideDetail(rideId: string): Promise<RideDetail | null> 
       roleLabel: m.roleLabel,
     })),
   };
+}
+
+/**
+ * Looks a ride up by slug (canonical public URL) or id (old `/rides/<id>`
+ * links). Drafts are never exposed. Callers must still check `visibility`
+ * before showing anything to a logged-out visitor.
+ */
+export async function getPublicRide(slugOrId: string): Promise<PublicRide | null> {
+  const ride = await prisma.ride.findFirst({
+    where: { OR: [{ slug: slugOrId }, { id: slugOrId }], status: { not: "DRAFT" } },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      description: true,
+      style: true,
+      status: true,
+      visibility: true,
+      rideDate: true,
+      meetupTime: true,
+      estimatedDistanceKm: true,
+      estimatedDurationMin: true,
+      maxRiders: true,
+      requiresApproval: true,
+      allowPillion: true,
+      helmetRequired: true,
+      startLocationName: true,
+      startLatitude: true,
+      startLongitude: true,
+      destinationName: true,
+      destinationLatitude: true,
+      destinationLongitude: true,
+      host: {
+        select: {
+          username: true,
+          riderProfile: { select: { fullName: true, avatarUrl: true } },
+        },
+      },
+      _count: { select: { members: { where: { status: "JOINED" } } } },
+    },
+  });
+
+  if (!ride) return null;
+
+  return {
+    ...ride,
+    startLatitude: Number(ride.startLatitude),
+    startLongitude: Number(ride.startLongitude),
+    destinationLatitude: Number(ride.destinationLatitude),
+    destinationLongitude: Number(ride.destinationLongitude),
+    memberCount: ride._count.members,
+    host: {
+      username: ride.host.username,
+      fullName: ride.host.riderProfile?.fullName ?? ride.host.username,
+      avatarUrl: ride.host.riderProfile?.avatarUrl ?? null,
+    },
+  };
+}
+
+/** Upcoming public rides, for the sitemap. */
+export async function listPublicRideSlugs(): Promise<{ slug: string; updatedAt: Date }[]> {
+  return prisma.ride.findMany({
+    where: {
+      visibility: "PUBLIC",
+      status: { in: ["PUBLISHED", "FULL", "ONGOING"] },
+    },
+    select: { slug: true, updatedAt: true },
+    orderBy: { rideDate: "asc" },
+    take: 5000,
+  });
 }

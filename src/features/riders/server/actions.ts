@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { safeNextPath } from "@/lib/safe-next";
 import { onboardingSchema } from "@/features/riders/validators";
 import type { ActionState } from "@/features/auth/server/actions";
 
@@ -60,5 +61,5 @@ export async function completeOnboardingAction(
     }),
   ]);
 
-  redirect("/dashboard");
+  redirect(safeNextPath(formData.get("next")) ?? "/dashboard");
 }
