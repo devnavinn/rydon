@@ -119,12 +119,14 @@ export function RiderMap({
     let cancelled = false;
     let map: MapplsMap | null = null;
 
-    loadMapplsSdk(token, style)
+    loadMapplsSdk(token)
       .then((sdk) => {
         if (cancelled) return;
         map = sdk.Map(containerId, { ...initialViewRef.current, zoomControl: true });
         map.addListener("load", () => {
-          if (!cancelled && map) setCtx({ sdk, map });
+          if (cancelled || !map) return;
+          if (style) sdk.setStyle(style);
+          setCtx({ sdk, map });
         });
         map.addListener("click", (e) => {
           // Clicks on a marker bubble to the map; treat those as marker clicks only.
@@ -145,6 +147,17 @@ export function RiderMap({
       }
     };
   }, [containerId, token, style]);
+
+  // The SDK doesn't track its container's size, so going fullscreen (or any layout change)
+  // leaves the canvas at its old size unless we resize it ourselves.
+  useEffect(() => {
+    if (!ctx) return;
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const observer = new ResizeObserver(() => ctx.map.resize?.());
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [ctx, containerId]);
 
   useEffect(() => {
     ctx?.map.panTo([centerLng, centerLat], { duration: 800 });

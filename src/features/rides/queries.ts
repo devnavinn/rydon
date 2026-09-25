@@ -46,3 +46,33 @@ export function useRideDetail(rideId: string, initialData?: RideDetail) {
     refetchInterval: 8_000,
   });
 }
+
+export type RoadRouteParams = {
+  fromLat: number;
+  fromLng: number;
+  toLat: number;
+  toLng: number;
+};
+
+async function fetchRoadRoute(params: RoadRouteParams): Promise<[number, number][]> {
+  const search = new URLSearchParams({
+    fromLat: String(params.fromLat),
+    fromLng: String(params.fromLng),
+    toLat: String(params.toLat),
+    toLng: String(params.toLng),
+  });
+  const res = await fetch(`/api/directions?${search.toString()}`);
+  if (!res.ok) throw new Error("Failed to load route");
+  const data = await res.json();
+  return data.points as [number, number][];
+}
+
+/** Road path between two points; stays cached since start/destination rarely change. */
+export function useRoadRoute(params: RoadRouteParams) {
+  return useQuery({
+    queryKey: ["road-route", params],
+    queryFn: () => fetchRoadRoute(params),
+    staleTime: Infinity,
+    retry: 1,
+  });
+}

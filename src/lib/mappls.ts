@@ -6,6 +6,7 @@ export type MapplsMouseEvent = { lngLat?: MapplsLatLng; originalEvent?: Event };
 export type MapplsMap = {
   addListener(event: string, handler: (e: MapplsMouseEvent) => void): void;
   panTo(center: [number, number], options?: { duration?: number }): void;
+  resize?(): void;
   remove(): void;
 };
 
@@ -20,6 +21,7 @@ export type MapplsSdk = {
   Marker(options: Record<string, unknown>): MapplsMarker;
   Polyline(options: Record<string, unknown>): MapplsPolyline;
   remove(options: { map: MapplsMap; layer: MapplsMarker | MapplsPolyline }): void;
+  setStyle(name: string): void;
 };
 
 declare global {
@@ -31,12 +33,11 @@ declare global {
 let sdkPromise: Promise<MapplsSdk> | null = null;
 
 /** Injects the Mappls Web SDK script once and resolves with `window.mappls`. */
-export function loadMapplsSdk(accessToken: string, style?: string): Promise<MapplsSdk> {
+export function loadMapplsSdk(accessToken: string): Promise<MapplsSdk> {
   if (window.mappls) return Promise.resolve(window.mappls);
   if (sdkPromise) return sdkPromise;
 
   const params = new URLSearchParams({ v: "3.0", access_token: accessToken });
-  if (style) params.set("style", style);
 
   sdkPromise = new Promise<MapplsSdk>((resolve, reject) => {
     const script = document.createElement("script");

@@ -45,3 +45,10 @@ export const rideStatusUpdateSchema = z.object({
   action: z.enum(["start", "end", "cancel", "approve_member", "reject_member"]),
   memberId: z.string().optional(),
 });
+
+export const directionsQuerySchema = z.object({
+  fromLat: z.coerce.number().min(-90).max(90),
+  fromLng: z.coerce.number().min(-180).max(180),
+  toLat: z.coerce.number().min(-90).max(90),
+  toLng: z.coerce.number().min(-180).max(180),
+});

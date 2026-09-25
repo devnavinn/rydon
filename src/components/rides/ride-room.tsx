@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Calendar, Clock, Users, Play, Flag as FlagIcon, MessageCircle, Pencil } from "lucide-react";
 
-import { useRideDetail } from "@/features/rides/queries";
+import { useRideDetail, useRoadRoute } from "@/features/rides/queries";
 import { useJoinRide, useLeaveRide, useRideAction } from "@/features/rides/mutations";
 import { useRideSimulation } from "@/features/rides/hooks";
 import { canEditRide } from "@/features/rides/permissions";
@@ -41,6 +41,13 @@ export function RideRoom({
   const leaveRide = useLeaveRide(rideId);
   const rideAction = useRideAction(rideId);
   const { progress, totalDistanceKm } = useRideSimulation(active, currentUserId);
+
+  const roadRoute = useRoadRoute({
+    fromLat: active.startLatitude,
+    fromLng: active.startLongitude,
+    toLat: active.destinationLatitude,
+    toLng: active.destinationLongitude,
+  });
 
   const joinedCount = active.members.filter((m) => m.status === "JOINED").length;
 
@@ -186,7 +193,8 @@ export function RideRoom({
                 routes={[
                   {
                     id: "route",
-                    points: [
+                    // Falls back to a straight line if routing is unavailable.
+                    points: roadRoute.data ?? [
                       [active.startLatitude, active.startLongitude],
                       [active.destinationLatitude, active.destinationLongitude],
                     ],
