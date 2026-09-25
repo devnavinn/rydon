@@ -15,8 +15,10 @@ import { cn } from "@/lib/utils";
 import type { NotificationDTO, NotificationsPage } from "@/features/notifications/types";
 
 function notificationHref(notification: NotificationDTO) {
-  const rideId = (notification.data as { rideId?: string } | null)?.rideId;
-  return rideId ? `/rides/${rideId}` : null;
+  const data = notification.data as { rideId?: string; username?: string } | null;
+  if (data?.rideId) return `/rides/${data.rideId}`;
+  if (data?.username) return `/riders/${data.username}`;
+  return null;
 }
 
 export function NotificationsList({ initialData }: { initialData: NotificationsPage }) {

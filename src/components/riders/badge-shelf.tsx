@@ -11,6 +11,9 @@ import {
   ShieldCheck,
   Crown,
   Users,
+  UserPlus,
+  Handshake,
+  Megaphone,
   Sparkles,
 } from "lucide-react";
 
@@ -30,6 +33,9 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   ShieldCheck,
   Crown,
   Users,
+  UserPlus,
+  Handshake,
+  Megaphone,
 };
 
 export function BadgeShelf({ badges }: { badges: { code: string }[] }) {
@@ -41,7 +47,7 @@ export function BadgeShelf({ badges }: { badges: { code: string }[] }) {
             <Sparkles className="size-5" />
           </div>
           <p className="text-sm text-muted-foreground">
-            No badges yet — they&apos;re earned by completing rides.
+            No badges yet — earn them by completing rides and inviting riders.
           </p>
         </CardContent>
       </Card>

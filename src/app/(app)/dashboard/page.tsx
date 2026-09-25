@@ -23,6 +23,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { getAppUrl } from "@/lib/app-url";
+import { getReferralSummary } from "@/features/referrals/server/referrals";
+import { InviteCard } from "@/components/referrals/invite-card";
 
 const QUICK_LINKS = [
   { href: "/riders", label: "Find nearby riders", icon: Users },
@@ -54,7 +57,7 @@ export default async function DashboardPage() {
   const user = await requireUser();
   const now = new Date();
 
-  const [myRides, ridesHosted, ridesJoined, upcomingCount] = await Promise.all([
+  const [myRides, ridesHosted, ridesJoined, upcomingCount, referralSummary, appUrl] = await Promise.all([
     prisma.rideMember.findMany({
       where: {
         userId: user.id,
@@ -87,6 +90,8 @@ export default async function DashboardPage() {
         ride: { rideDate: { gte: now } },
       },
     }),
+    getReferralSummary(user.id),
+    getAppUrl(),
   ]);
 
   const displayName = user.riderProfile?.fullName ?? user.username;
@@ -151,6 +156,8 @@ export default async function DashboardPage() {
             </Link>
           ))}
         </div>
+
+        <InviteCard summary={referralSummary} origin={appUrl} />
 
         {/* Your rides */}
         <div>

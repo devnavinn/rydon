@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-import { env } from "@/lib/env";
+import { env, isProduction } from "@/lib/env";
+import { REFERRAL_COOKIE, REFERRAL_COOKIE_MAX_AGE, isReferralCode } from "@/features/referrals/constants";
 
 const APP_PREFIX = "/dashboard";
 const APP_ROUTES = [
@@ -20,7 +21,6 @@ const APP_ROUTES = [
 const AUTH_ROUTES = ["/sign-in", "/sign-up"];
 
 export default async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
   // getToken doesn't infer the request's protocol the way the rest of Auth.js
   // does, so without this it always looks for the non-`__Secure-` cookie name
   // — which silently breaks every session check once the app is served over
@@ -31,6 +31,27 @@ export default async function proxy(request: NextRequest) {
   // no Prisma/Node APIs, so this stays lightweight in the proxy runtime.
   const token = await getToken({ req: request, secret: env.AUTH_SECRET, secureCookie });
   const hasSession = Boolean(token);
+
+  const response = route(request, hasSession);
+
+  // `?ref=<code>` on shared links (e.g. a ride shared by a rider) credits that
+  // rider if this visitor signs up. First invite wins — don't overwrite.
+  const ref = request.nextUrl.searchParams.get("ref")?.toLowerCase();
+  if (!hasSession && isReferralCode(ref) && !request.cookies.has(REFERRAL_COOKIE)) {
+    response.cookies.set(REFERRAL_COOKIE, ref, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: isProduction,
+      maxAge: REFERRAL_COOKIE_MAX_AGE,
+      path: "/",
+    });
+  }
+
+  return response;
+}
+
+function route(request: NextRequest, hasSession: boolean): NextResponse {
+  const { pathname } = request.nextUrl;
 
   const isAppRoute = APP_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
@@ -68,6 +89,9 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    // Public pages people land on from shared links (referral capture).
+    "/",
+    "/r/:path*",
     "/dashboard/:path*",
     "/riders/:path*",
     "/map/:path*",

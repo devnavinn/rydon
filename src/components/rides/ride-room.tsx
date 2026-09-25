@@ -26,11 +26,13 @@ export function RideRoom({
   initialRide,
   currentUserId,
   emergencySharingOn,
+  referralCode,
 }: {
   rideId: string;
   initialRide: RideDetail;
   currentUserId: string;
   emergencySharingOn: boolean;
+  referralCode: string;
 }) {
   const { data: ride } = useRideDetail(rideId, initialRide);
   const active = ride ?? initialRide;
@@ -126,7 +128,7 @@ export function RideRoom({
         <div className="flex flex-col items-end gap-1.5">
           <div className="flex gap-2">
             {active.visibility === "PUBLIC" && active.status !== "DRAFT" && active.status !== "CANCELLED" ? (
-              <ShareRideButton slug={active.slug} title={active.title} />
+              <ShareRideButton slug={active.slug} title={active.title} referralCode={referralCode} />
             ) : null}
             {active.groupId && (isHost || (membership && membership.status !== "LEFT")) ? (
               <Button variant="outline" asChild>

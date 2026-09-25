@@ -7,11 +7,21 @@ import { publicRidePath } from "@/features/rides/format";
 import { Button } from "@/components/ui/button";
 
 /** Shares the ride's public page — native share sheet on mobile, copy-link elsewhere. */
-export function ShareRideButton({ slug, title }: { slug: string; title: string }) {
+export function ShareRideButton({
+  slug,
+  title,
+  referralCode,
+}: {
+  slug: string;
+  title: string;
+  /** Appended as `?ref=` so riders who sign up from this link credit the sharer. */
+  referralCode?: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   async function handleClick() {
-    const url = `${window.location.origin}${publicRidePath(slug)}`;
+    const ref = referralCode ? `?ref=${referralCode}` : "";
+    const url = `${window.location.origin}${publicRidePath(slug)}${ref}`;
 
     if (navigator.share) {
       try {

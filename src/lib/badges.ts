@@ -104,7 +104,39 @@ export const BADGES: BadgeDefinition[] = [
   },
 ];
 
-export const BADGE_BY_CODE = new Map(BADGES.map((b) => [b.code, b]));
+export type ReferralBadgeDefinition = Omit<BadgeDefinition, "check"> & {
+  /** Riders who must finish onboarding through your invite. */
+  threshold: number;
+};
+
+/** Awarded from the referral flow, not after rides — see features/referrals. */
+export const REFERRAL_BADGES: ReferralBadgeDefinition[] = [
+  {
+    code: "RECRUITER",
+    label: "Recruiter",
+    description: "Brought a rider to Rydo.",
+    icon: "UserPlus",
+    threshold: 1,
+  },
+  {
+    code: "CREW_BUILDER",
+    label: "Crew Builder",
+    description: "Brought 3 riders to Rydo.",
+    icon: "Handshake",
+    threshold: 3,
+  },
+  {
+    code: "AMBASSADOR",
+    label: "Rydo Ambassador",
+    description: "Brought 10 riders to Rydo.",
+    icon: "Megaphone",
+    threshold: 10,
+  },
+];
+
+export const BADGE_BY_CODE = new Map<string, Omit<BadgeDefinition, "check">>(
+  [...BADGES, ...REFERRAL_BADGES].map((b) => [b.code, b])
+);
 
 export function evaluateNewBadges(ctx: BadgeContext, alreadyEarnedCodes: Set<string>): BadgeDefinition[] {
   return BADGES.filter((b) => !alreadyEarnedCodes.has(b.code) && b.check(ctx));

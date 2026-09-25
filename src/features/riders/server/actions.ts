@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { safeNextPath } from "@/lib/safe-next";
+import { claimReferral } from "@/features/referrals/server/referrals";
 import { onboardingSchema } from "@/features/riders/validators";
 import type { ActionState } from "@/features/auth/server/actions";
 
@@ -60,6 +61,13 @@ export async function completeOnboardingAction(
       data: { lastSeenAt: new Date() },
     }),
   ]);
+
+  try {
+    await claimReferral(user.id);
+  } catch (error) {
+    // A referral hiccup must never block a rider from getting in.
+    console.error("claimReferral failed", error);
+  }
 
   redirect(safeNextPath(formData.get("next")) ?? "/dashboard");
 }

@@ -86,6 +86,7 @@ enum NotificationType {
   GROUP_MESSAGE
   SOS_ALERT
   BADGE_EARNED
+  REFERRAL_JOINED
   SYSTEM
 }
 
@@ -115,8 +116,16 @@ model User {
   isActive          Boolean      @default(true)
   isVerified        Boolean      @default(false)
   lastSeenAt        DateTime?
+  // Invite code for /join/<code>; generated the first time it's needed.
+  referralCode      String?      @unique
+  // Set when a referred rider finishes onboarding — that's when a referral counts.
+  referredById      String?
+  referredAt        DateTime?
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
+
+  referredBy User?  @relation("Referrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals  User[] @relation("Referrals")
 
   riderProfile            RiderProfile?
   bikes                   Bike[]
@@ -140,6 +149,7 @@ model User {
 
   @@index([email])
   @@index([phone])
+  @@index([referredById])
   @@index([username])
   @@index([role, isActive])
 }
