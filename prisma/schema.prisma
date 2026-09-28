@@ -87,7 +87,27 @@ enum NotificationType {
   SOS_ALERT
   BADGE_EARNED
   REFERRAL_JOINED
+  CLUB_JOIN_REQUEST
+  CLUB_JOINED
+  CLUB_RIDE
   SYSTEM
+}
+
+enum ClubJoinPolicy {
+  OPEN
+  APPROVAL
+  INVITE_ONLY
+}
+
+enum ClubRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum ClubMemberStatus {
+  ACTIVE
+  PENDING
 }
 
 enum ReportTargetType {
@@ -144,6 +164,7 @@ model User {
   blockedBy               UserBlock[]              @relation("BlockedUser")
   blocking                UserBlock[]              @relation("BlockingUser")
   savedRides              SavedRide[]
+  clubMemberships         ClubMember[]
   trackingLinks           TrackingLink[]
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens     PasswordResetToken[]
@@ -246,11 +267,14 @@ model Ride {
   allowPillion         Boolean        @default(false)
   helmetRequired       Boolean        @default(true)
   keepGroupAfterRide   Boolean        @default(false)
+  // Set when a club admin hosts the ride on the club's behalf.
+  clubId               String?
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
   cancelledAt          DateTime?
 
   host          User           @relation("RideHost", fields: [hostId], references: [id], onDelete: Restrict)
+  club          Club?          @relation(fields: [clubId], references: [id], onDelete: SetNull)
   stops         RideStop[]
   members       RideMember[]
   invites       RideInvite[]
@@ -259,6 +283,7 @@ model Ride {
   trackingLinks TrackingLink[]
 
   @@index([hostId])
+  @@index([clubId, rideDate])
   @@index([rideDate, status])
   @@index([style, visibility, status])
   @@index([startLatitude, startLongitude])
@@ -534,4 +559,42 @@ model Report {
   @@index([targetType, targetId])
   @@index([status, createdAt])
   @@index([reviewedById])
+}
+
+// A riding club: a standing crew that outlives any single ride (unlike RideGroup,
+// which is the chat room for one ride).
+model Club {
+  id          String         @id @default(cuid())
+  slug        String         @unique
+  name        String
+  description String?        @db.Text
+  city        String?
+  joinPolicy  ClubJoinPolicy @default(APPROVAL)
+  // Shared by admins as /clubs/join/<code>; joining through it skips approval.
+  inviteCode  String         @unique
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  members ClubMember[]
+  rides   Ride[]
+
+  @@index([joinPolicy, city])
+}
+
+model ClubMember {
+  id        String           @id @default(cuid())
+  clubId    String
+  userId    String
+  role      ClubRole         @default(MEMBER)
+  status    ClubMemberStatus @default(ACTIVE)
+  createdAt DateTime         @default(now())
+  // When they became ACTIVE (null while a request is pending).
+  joinedAt  DateTime?
+
+  club Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([clubId, userId])
+  @@index([userId, status])
+  @@index([clubId, status, role])
 }

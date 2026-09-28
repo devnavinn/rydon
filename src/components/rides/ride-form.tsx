@@ -47,7 +47,18 @@ function toTimeInputValue(iso: string) {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-export function RideForm({ center, ride }: { center: [number, number]; ride?: RideDetail }) {
+export function RideForm({
+  center,
+  ride,
+  clubs = [],
+  defaultClubId,
+}: {
+  center: [number, number];
+  ride?: RideDetail;
+  /** Clubs the rider admins — offered as "Host as" on new rides. */
+  clubs?: { id: string; name: string }[];
+  defaultClubId?: string;
+}) {
   const [pickTarget, setPickTarget] = useState<PickTarget>("start");
   const createRide = useCreateRide();
   const updateRide = useUpdateRide(ride?.id ?? "");
@@ -94,6 +105,7 @@ export function RideForm({ center, ride }: { center: [number, number]; ride?: Ri
           startLongitude: center[1],
           destinationLatitude: center[0],
           destinationLongitude: center[1],
+          clubId: defaultClubId,
         },
   });
 
@@ -165,6 +177,28 @@ export function RideForm({ center, ride }: { center: [number, number]; ride?: Ri
               ) : null}
             </div>
           </div>
+
+          {!ride && clubs.length > 0 ? (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="clubId">Host as</Label>
+              <Select
+                defaultValue={defaultClubId ?? "none"}
+                onValueChange={(value) => setValue("clubId", value === "none" ? undefined : value)}
+              >
+                <SelectTrigger id="clubId" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Just me</SelectItem>
+                  {clubs.map((club) => (
+                    <SelectItem key={club.id} value={club.id}>
+                      {club.name} — notifies every member
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">

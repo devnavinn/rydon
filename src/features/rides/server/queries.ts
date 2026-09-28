@@ -108,6 +108,7 @@ export async function getRideDetail(rideId: string): Promise<RideDetail | null> 
       destinationLongitude: true,
       hostId: true,
       group: { select: { id: true, activeFrom: true } },
+      club: { select: { slug: true, name: true } },
       members: {
         where: { status: { not: "LEFT" } },
         select: {
@@ -154,6 +155,7 @@ export async function getRideDetail(rideId: string): Promise<RideDetail | null> 
     hostId: ride.hostId,
     groupId: ride.group?.id ?? null,
     groupActiveFrom: ride.group?.activeFrom?.toISOString() ?? null,
+    club: ride.club,
     members: ride.members.map((m) => ({
       id: m.id,
       userId: m.userId,

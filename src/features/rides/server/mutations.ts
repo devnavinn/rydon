@@ -10,8 +10,11 @@ import {
 } from "@/features/notifications/server/mutations";
 import { isBlockedEitherWay } from "@/features/blocking/server/queries";
 import { computeRideStatsForMembers } from "@/features/rides/server/stats";
+import { ClubError } from "@/features/clubs/server/mutations";
 
 export async function createRide(hostId: string, input: CreateRideInput) {
+  const club = input.clubId ? await requireClubHost(input.clubId, hostId) : null;
+
   const base = slugify(input.title);
   let slug = base;
   let suffix = 0;
@@ -48,6 +51,7 @@ export async function createRide(hostId: string, input: CreateRideInput) {
       allowPillion: input.allowPillion,
       helmetRequired: input.helmetRequired,
       status: "PUBLISHED",
+      clubId: club?.id ?? null,
       members: {
         create: { userId: hostId, status: "JOINED", roleLabel: "captain", approvedAt: new Date() },
       },
@@ -62,7 +66,40 @@ export async function createRide(hostId: string, input: CreateRideInput) {
     select: { id: true },
   });
 
+  if (club) await notifyClubOfRide(club, hostId, ride.id, input.title);
   return ride;
+}
+
+async function requireClubHost(clubId: string, hostId: string) {
+  const membership = await prisma.clubMember.findUnique({
+    where: { clubId_userId: { clubId, userId: hostId } },
+    select: { role: true, status: true, club: { select: { id: true, name: true, slug: true } } },
+  });
+  if (!membership || membership.status !== "ACTIVE" || membership.role === "MEMBER") {
+    throw new ClubError("Only club admins can host club rides");
+  }
+  return membership.club;
+}
+
+async function notifyClubOfRide(
+  club: { id: string; name: string; slug: string },
+  hostId: string,
+  rideId: string,
+  title: string
+) {
+  const members = await prisma.clubMember.findMany({
+    where: { clubId: club.id, status: "ACTIVE", userId: { not: hostId }, user: { isActive: true } },
+    select: { userId: true },
+  });
+  await createNotifications(
+    members.map((m) => ({
+      userId: m.userId,
+      type: "CLUB_RIDE" as const,
+      title: `New ${club.name} ride: ${title}`,
+      body: "Tap to see the plan and join.",
+      data: { rideId, clubSlug: club.slug },
+    }))
+  );
 }
 
 export async function updateRide(rideId: string, hostId: string, input: CreateRideInput) {

@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { safeNextPath } from "@/lib/safe-next";
 import { claimReferral } from "@/features/referrals/server/referrals";
+import { claimClubInvite } from "@/features/clubs/server/invites";
+import { clubPath } from "@/features/clubs/constants";
 import { onboardingSchema } from "@/features/riders/validators";
 import type { ActionState } from "@/features/auth/server/actions";
 
@@ -69,5 +71,13 @@ export async function completeOnboardingAction(
     console.error("claimReferral failed", error);
   }
 
-  redirect(safeNextPath(formData.get("next")) ?? "/dashboard");
+  let clubSlug: string | null = null;
+  try {
+    clubSlug = await claimClubInvite(user.id);
+  } catch (error) {
+    // Same as referrals — never block onboarding on a club invite.
+    console.error("claimClubInvite failed", error);
+  }
+
+  redirect(safeNextPath(formData.get("next")) ?? (clubSlug ? clubPath(clubSlug) : "/dashboard"));
 }

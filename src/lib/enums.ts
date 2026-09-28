@@ -25,3 +25,5 @@ export const USER_ROLES = ["USER", "MODERATOR", "ADMIN"] as const;
 export const REPORT_TARGET_TYPES = ["USER", "RIDE", "GROUP", "MESSAGE"] as const;
 
 export const REPORT_STATUSES = ["OPEN", "REVIEWING", "RESOLVED", "REJECTED"] as const;
+
+export const CLUB_JOIN_POLICIES = ["OPEN", "APPROVAL", "INVITE_ONLY"] as const;

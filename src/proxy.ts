@@ -18,6 +18,7 @@ const APP_ROUTES = [
   "/saved-rides",
   "/settings",
   "/admin",
+  "/clubs",
 ];
 const AUTH_ROUTES = ["/sign-in", "/sign-up"];
 
@@ -71,6 +72,17 @@ function route(request: NextRequest, hasSession: boolean): NextResponse {
     return NextResponse.redirect(url);
   }
 
+  // Club invite links must work for visitors who aren't on Rydo yet.
+  if (pathname.startsWith("/clubs/join/")) return NextResponse.next();
+
+  // Same for shared club links: logged-out visitors get the public club page.
+  const clubMatch = pathname.match(/^\/clubs\/([^/]+)$/);
+  if (clubMatch && clubMatch[1] !== "new" && !hasSession) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/c/${clubMatch[1]}`;
+    return NextResponse.redirect(url);
+  }
+
   if (isAppRoute && !hasSession) {
     const url = request.nextUrl.clone();
     url.pathname = "/sign-in";
@@ -93,6 +105,7 @@ export const config = {
     // Public pages people land on from shared links (referral capture).
     "/",
     "/r/:path*",
+    "/c/:path*",
     "/dashboard/:path*",
     "/riders/:path*",
     "/map/:path*",
@@ -104,6 +117,7 @@ export const config = {
     "/saved-rides/:path*",
     "/settings/:path*",
     "/admin/:path*",
+    "/clubs/:path*",
     "/sign-in",
     "/sign-up",
   ],

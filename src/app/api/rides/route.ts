@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { nearbyRidesQuerySchema, createRideSchema } from "@/features/rides/validators";
 import { findNearbyRides } from "@/features/rides/server/queries";
 import { createRide } from "@/features/rides/server/mutations";
+import { ClubError } from "@/features/clubs/server/mutations";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
@@ -37,6 +38,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const ride = await createRide(user.id, parsed.data);
-  return NextResponse.json({ ride }, { status: 201 });
+  try {
+    const ride = await createRide(user.id, parsed.data);
+    return NextResponse.json({ ride }, { status: 201 });
+  } catch (error) {
+    if (error instanceof ClubError) return NextResponse.json({ error: error.message }, { status: 403 });
+    throw error;
+  }
 }

@@ -13,6 +13,7 @@ import {
   Bookmark,
   MoreHorizontal,
   ShieldCheck,
+  Shield,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -28,6 +29,7 @@ const LINKS = [
   { href: "/riders", label: "Riders", icon: Users },
   { href: "/map", label: "Map", icon: Map },
   { href: "/rides", label: "Rides", icon: Route },
+  { href: "/clubs", label: "Clubs", icon: Shield },
   { href: "/saved-rides", label: "Saved", icon: Bookmark },
   { href: "/rides/create", label: "Create Ride", icon: PlusCircle },
   { href: "/profile", label: "Profile", icon: User },
@@ -35,7 +37,7 @@ const LINKS = [
 ];
 
 const PRIMARY_LINKS = LINKS.filter((link) =>
-  ["/dashboard", "/riders", "/map", "/rides", "/rides/create"].includes(link.href)
+  ["/dashboard", "/riders", "/map", "/rides", "/clubs", "/rides/create"].includes(link.href)
 );
 const OVERFLOW_LINKS = LINKS.filter((link) => !PRIMARY_LINKS.includes(link));
 const ADMIN_LINK = { href: "/admin", label: "Admin", icon: ShieldCheck };

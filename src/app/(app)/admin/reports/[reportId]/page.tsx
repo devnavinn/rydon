@@ -7,7 +7,7 @@ import { requireStaff } from "@/lib/auth";
 import { getReportDetail } from "@/features/admin/server/queries";
 import { cancelRideAction, removeMessageAction } from "@/features/admin/server/actions";
 import type { ReportPerson, ReportTarget } from "@/features/reports/types";
-import { AdminActionButton } from "@/components/admin/admin-action-button";
+import { ActionButton } from "@/components/shared/action-button";
 import { ReportStatusBadge } from "@/components/admin/report-status-badge";
 import { ReviewReportForm } from "@/components/admin/review-report-form";
 import { SuspendToggle } from "@/components/admin/suspend-toggle";
@@ -55,7 +55,7 @@ function TargetPanel({ target }: { target: ReportTarget }) {
               <Badge variant="secondary">{target.ride.status}</Badge>
             </div>
             {target.ride.status !== "CANCELLED" && target.ride.status !== "COMPLETED" ? (
-              <AdminActionButton
+              <ActionButton
                 action={cancelRideAction.bind(null, target.ride.id)}
                 label="Cancel ride"
                 pendingLabel="Cancelling…"
@@ -91,7 +91,7 @@ function TargetPanel({ target }: { target: ReportTarget }) {
             {target.message.isDeleted ? (
               <Badge variant="outline">Removed from chat</Badge>
             ) : (
-              <AdminActionButton
+              <ActionButton
                 action={removeMessageAction.bind(null, target.message.id)}
                 label="Remove message"
                 pendingLabel="Removing…"

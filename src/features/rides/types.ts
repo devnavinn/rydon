@@ -55,6 +55,8 @@ export type RideDetail = {
   hostId: string;
   groupId: string | null;
   groupActiveFrom: string | null;
+  /** Set when the ride was hosted on a club's behalf. */
+  club: { slug: string; name: string } | null;
   members: RideMemberSummary[];
 };
 

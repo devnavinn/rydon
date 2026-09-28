@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Calendar, Clock, Users, Play, Flag as FlagIcon, MessageCircle, Pencil } from "lucide-react";
+import { Calendar, Clock, Users, Play, Flag as FlagIcon, MessageCircle, Pencil, Shield } from "lucide-react";
 
 import { useRideDetail, useRoadRoute } from "@/features/rides/queries";
 import { useJoinRide, useLeaveRide, useRideAction } from "@/features/rides/mutations";
@@ -112,6 +112,12 @@ export function RideRoom({
             {!isHost ? <ReportButton targetType="RIDE" targetId={rideId} targetLabel={`"${active.title}"`} /> : null}
           </div>
           <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            {active.club ? (
+              <Link href={`/clubs/${active.club.slug}`} className="flex items-center gap-1 text-primary hover:underline">
+                <Shield className="size-3.5" />
+                {active.club.name}
+              </Link>
+            ) : null}
             <span className="flex items-center gap-1">
               <Calendar className="size-3.5" />
               {rideDate.toLocaleDateString()}

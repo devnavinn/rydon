@@ -1,9 +1,9 @@
 import { reactivateUserAction, suspendUserAction } from "@/features/admin/server/actions";
-import { AdminActionButton } from "@/components/admin/admin-action-button";
+import { ActionButton } from "@/components/shared/action-button";
 
 export function SuspendToggle({ userId, username, isActive }: { userId: string; username: string; isActive: boolean }) {
   return isActive ? (
-    <AdminActionButton
+    <ActionButton
       action={suspendUserAction.bind(null, userId)}
       label="Suspend"
       pendingLabel="Suspending…"
@@ -11,7 +11,7 @@ export function SuspendToggle({ userId, username, isActive }: { userId: string; 
       confirmMessage={`Suspend @${username}? They'll be signed out everywhere and their live tracking links will stop.`}
     />
   ) : (
-    <AdminActionButton
+    <ActionButton
       action={reactivateUserAction.bind(null, userId)}
       label="Reactivate"
       pendingLabel="Reactivating…"

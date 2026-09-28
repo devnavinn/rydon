@@ -30,6 +30,8 @@ export const createRideSchema = z
     requiresApproval: z.boolean().default(true),
     allowPillion: z.boolean().default(false),
     helmetRequired: z.boolean().default(true),
+    // Host on a club's behalf. Only honoured on create; the host must be a club admin.
+    clubId: z.string().min(1).optional(),
   })
   .refine((data) => data.maxRiders >= data.minRiders, {
     message: "Max riders must be at least the min riders",
