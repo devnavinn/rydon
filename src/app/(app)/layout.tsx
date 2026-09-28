@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
+import { auth } from "@/auth";
 import { getCurrentUser } from "@/lib/auth";
+import { isStaff } from "@/lib/permissions";
 import { Nav, MobileTabBar } from "@/components/shared/nav";
 import { UserMenu } from "@/components/shared/user-menu";
 import { NotificationBell } from "@/components/shared/notification-bell";
@@ -14,7 +16,9 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
-  if (!user) redirect("/sign-in");
+  // A session with no active user means the account was suspended — sending it to
+  // /sign-in would bounce straight back here, since the proxy sees a session.
+  if (!user) redirect((await auth()) ? "/account-suspended" : "/sign-in");
   if (!user.riderProfile?.profileCompleted) redirect("/onboarding");
 
   return (
@@ -39,7 +43,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </span>
             <span className="font-heading text-xl tracking-wide">RYDO</span>
           </Link>
-          <Nav />
+          <Nav showAdmin={isStaff(user.role)} />
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <NotificationBell />

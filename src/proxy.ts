@@ -17,6 +17,7 @@ const APP_ROUTES = [
   "/profile",
   "/saved-rides",
   "/settings",
+  "/admin",
 ];
 const AUTH_ROUTES = ["/sign-in", "/sign-up"];
 
@@ -102,6 +103,7 @@ export const config = {
     "/profile/:path*",
     "/saved-rides/:path*",
     "/settings/:path*",
+    "/admin/:path*",
     "/sign-in",
     "/sign-up",
   ],

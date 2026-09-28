@@ -139,6 +139,7 @@ model User {
   locationPings           LocationPing[]
   emergencyContacts       EmergencyContact[]
   sentReports             Report[]                 @relation("ReportReporter")
+  reviewedReports         Report[]                 @relation("ReportReviewer")
   notifications           Notification[]
   blockedBy               UserBlock[]              @relation("BlockedUser")
   blocking                UserBlock[]              @relation("BlockingUser")
@@ -512,19 +513,25 @@ model UserBlock {
 }
 
 model Report {
-  id         String           @id @default(cuid())
-  reporterId String
-  targetType ReportTargetType
-  targetId   String
-  reason     String
-  details    String?          @db.Text
-  status     ReportStatus     @default(OPEN)
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
+  id             String           @id @default(cuid())
+  reporterId     String
+  targetType     ReportTargetType
+  targetId       String
+  reason         String
+  details        String?          @db.Text
+  status         ReportStatus     @default(OPEN)
+  // Set by the moderator who last moved the report out of OPEN.
+  reviewedById   String?
+  reviewedAt     DateTime?
+  resolutionNote String?          @db.Text
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
-  reporter User @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reporter   User  @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reviewedBy User? @relation("ReportReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
 
   @@index([reporterId])
   @@index([targetType, targetId])
   @@index([status, createdAt])
+  @@index([reviewedById])
 }

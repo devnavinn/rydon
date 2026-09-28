@@ -19,3 +19,9 @@ export const RIDE_STYLES = [
 ] as const;
 
 export const RIDE_VISIBILITIES = ["PUBLIC", "FOLLOWERS", "INVITE_ONLY"] as const;
+
+export const USER_ROLES = ["USER", "MODERATOR", "ADMIN"] as const;
+
+export const REPORT_TARGET_TYPES = ["USER", "RIDE", "GROUP", "MESSAGE"] as const;
+
+export const REPORT_STATUSES = ["OPEN", "REVIEWING", "RESOLVED", "REJECTED"] as const;

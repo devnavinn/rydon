@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { hasBlocked } from "@/features/blocking/server/queries";
 import { nextLevelProgress } from "@/lib/rider-level";
 import { BlockButton } from "@/components/riders/block-button";
+import { ReportButton } from "@/components/reports/report-button";
 import { BadgeShelf } from "@/components/riders/badge-shelf";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -98,7 +99,10 @@ export default async function RiderProfilePage({
             </div>
           </div>
           {!isOwnProfile ? (
-            <BlockButton username={user.username} initiallyBlocked={isBlockedByMe} />
+            <div className="flex flex-col items-end gap-1">
+              <BlockButton username={user.username} initiallyBlocked={isBlockedByMe} />
+              <ReportButton targetType="USER" targetId={user.id} targetLabel={`@${user.username}`} />
+            </div>
           ) : null}
         </CardContent>
       </Card>

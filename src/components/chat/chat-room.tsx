@@ -8,6 +8,7 @@ import { useMessages, useMessagesStream, flattenMessages } from "@/features/chat
 import { useSendMessage } from "@/features/chat/mutations";
 import { useBlockedUserIds } from "@/features/blocking/queries";
 import type { ChatMessagesPage } from "@/features/chat/types";
+import { ReportButton } from "@/components/reports/report-button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,9 +98,19 @@ export function ChatRoom({
                   >
                     {message.body}
                   </div>
-                  <span className="px-1 text-[11px] text-muted-foreground">
-                    {formatDistanceToNowStrict(new Date(message.createdAt), { addSuffix: true })}
-                  </span>
+                  <div className="flex items-center gap-2 px-1">
+                    <span className="text-[11px] text-muted-foreground">
+                      {formatDistanceToNowStrict(new Date(message.createdAt), { addSuffix: true })}
+                    </span>
+                    {!isOwn ? (
+                      <ReportButton
+                        compact
+                        targetType="MESSAGE"
+                        targetId={message.id}
+                        targetLabel={`${message.senderFullName}'s message`}
+                      />
+                    ) : null}
+                  </div>
                 </div>
               </div>
             );

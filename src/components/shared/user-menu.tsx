@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { LogOut, Settings } from "lucide-react";
+import { LogOut, Settings, ShieldCheck } from "lucide-react";
 
+import { isStaff } from "@/lib/permissions";
 import { signOutAction } from "@/features/auth/server/actions";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -27,6 +28,13 @@ export function UserMenu({ user }: { user: SessionUser }) {
           <p className="text-xs text-muted-foreground">@{user.username}</p>
         </div>
       </Link>
+      {isStaff(user.role) ? (
+        <Button asChild variant="ghost" size="icon-sm" aria-label="Admin" className="md:hidden">
+          <Link href="/admin">
+            <ShieldCheck className="size-4" />
+          </Link>
+        </Button>
+      ) : null}
       <Button asChild variant="ghost" size="icon-sm" aria-label="Settings" className="md:hidden">
         <Link href="/settings">
           <Settings className="size-4" />

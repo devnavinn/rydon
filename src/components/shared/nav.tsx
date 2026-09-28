@@ -12,6 +12,7 @@ import {
   Settings,
   Bookmark,
   MoreHorizontal,
+  ShieldCheck,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -37,14 +38,16 @@ const PRIMARY_LINKS = LINKS.filter((link) =>
   ["/dashboard", "/riders", "/map", "/rides", "/rides/create"].includes(link.href)
 );
 const OVERFLOW_LINKS = LINKS.filter((link) => !PRIMARY_LINKS.includes(link));
+const ADMIN_LINK = { href: "/admin", label: "Admin", icon: ShieldCheck };
 
 function isActive(pathname: string, href: string) {
   return pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
 }
 
-export function Nav() {
+export function Nav({ showAdmin = false }: { showAdmin?: boolean }) {
   const pathname = usePathname();
-  const overflowActive = OVERFLOW_LINKS.some((link) => isActive(pathname, link.href));
+  const overflowLinks = showAdmin ? [...OVERFLOW_LINKS, ADMIN_LINK] : OVERFLOW_LINKS;
+  const overflowActive = overflowLinks.some((link) => isActive(pathname, link.href));
 
   return (
     <nav className="hidden min-w-0 items-center gap-0.5 rounded-full border border-white/8 bg-white/[0.03] p-1 md:flex">
@@ -78,7 +81,7 @@ export function Nav() {
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          {OVERFLOW_LINKS.map(({ href, label, icon: Icon }) => (
+          {overflowLinks.map(({ href, label, icon: Icon }) => (
             <DropdownMenuItem key={href} asChild>
               <Link href={href} className={cn(isActive(pathname, href) && "text-primary")}>
                 <Icon className="size-4" />

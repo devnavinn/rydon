@@ -18,6 +18,7 @@ import type { MapMarker } from "@/components/map/rider-map";
 import { InviteList } from "@/components/rides/invite-list";
 import { ProgressPanel } from "@/components/rides/progress-panel";
 import { SaveRideButton } from "@/components/rides/save-ride-button";
+import { ReportButton } from "@/components/reports/report-button";
 import { ShareLocationCard } from "@/components/rides/share-location-card";
 import { ShareRideButton } from "@/components/rides/share-ride-button";
 
@@ -108,6 +109,7 @@ export function RideRoom({
               {active.status}
             </Badge>
             <SaveRideButton rideId={rideId} />
+            {!isHost ? <ReportButton targetType="RIDE" targetId={rideId} targetLabel={`"${active.title}"`} /> : null}
           </div>
           <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
